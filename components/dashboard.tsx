@@ -1,13 +1,7 @@
-
 "use client";
 
-import { useState, useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useState, useCallback, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -21,35 +15,47 @@ import { Play, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
-import { useStartServer } from "@/lib/hooks/useServer";
+import {
+  useStartServer,
+  type StartServerPayload,
+  type StartServerResponse,
+} from "@/lib/hooks/useServer";
 import { useMcServerStatus } from "@/lib/hooks/useServerStatus";
-
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
-const STATUS_COLOR: Record<ServerStatus, string> = {
-  PENDING: "bg-yellow-500",
-  RUNNING: "bg-green-500",
-  STOPPED: "bg-red-500",
-};
-
-const STATUS_LABEL: Record<ServerStatus, string> = {
-  PENDING: "Pending…",
-  RUNNING: "Running",
-  STOPPED: "Stopped",
+const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
+  PENDING: { color: "bg-yellow-500", label: "Pending…" },
+  RUNNING: { color: "bg-green-500", label: "Running" },
+  STOPPED: { color: "bg-red-500", label: "Stopped" },
 };
 
 export default function Dashboard() {
-  const [version, setVersion] = useState("");
-  const [type, setServerType] = useState("");
+  const [config, setConfig] = useState<{ version: string; type: string }>({
+    version: "",
+    type: "",
+  });
 
-  const [pollStatus, setPollStatus] = useState(false); // ← starts off
+  const [serverId, setServerId] = useState<string>();
 
-  const { data: serverStatusRaw } = useMcServerStatus(undefined, pollStatus);
-  const serverStatus: ServerStatus = serverStatusRaw?.serverStatus ?? "STOPPED";
+  const {
+    mutate: startServer,
+    isPending: isStarting,
+  } = useStartServer();
 
-  const { mutate: startServer, isPending: isStarting } = useStartServer();
+  const { data: statusData } = useMcServerStatus(serverId);
+  const status: ServerStatus = statusData?.serverStatus ?? "STOPPED";
 
-  const handleStartServer = useCallback(() => {
+  const canStart = useMemo(
+    () =>
+      !isStarting &&
+      Boolean(config.version) &&
+      Boolean(config.type) &&
+      status === "STOPPED",
+    [isStarting, config, status],
+  );
+
+  const handleStart = useCallback(() => {
+    const { version, type } = config;
     if (!version || !type) {
       toast.error("Missing configuration", {
         description: "Select both a version and a server type first.",
@@ -58,59 +64,54 @@ export default function Dashboard() {
     }
 
     startServer(
-      { type, version },
+      { version, type } as StartServerPayload,
       {
-        onSuccess: () => {
-          toast.success("Request accepted", {
-            description: "Server startup initiated. This may take a few minutes…",
+        onSuccess: (data: StartServerResponse) => {
+          setServerId(data.serverId);
+          toast.success("Server startup initiated", {
+            description: "Give it a minute while we spin things up…",
           });
-          setPollStatus(true); // 🚀 start polling only after success
         },
-        onError: (err) =>
+        onError: (err: unknown) =>
           toast.error("Network error", {
             description: err instanceof Error ? err.message : String(err),
           }),
       },
     );
-  }, [version, type, startServer]);
+  }, [config, startServer]);
 
-  // TODO: wire to /servers/{id}/stop when the endpoint is ready
-  const handleStopServer = useCallback(() => {
+  const handleStop = useCallback(() => {
     toast("Stopping not implemented yet");
   }, []);
 
-  const disableStart =
-    isStarting || !version || !type || serverStatus !== "STOPPED";
-
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-2xl space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Minecraft Server Dashboard
-          </h1>
-          <p className="mt-2 text-gray-600">
+    <main className="min-h-screen bg-background p-6">
+      <section className="mx-auto max-w-2xl space-y-6">
+        {/* HEADER */}
+        <header className="text-center">
+          <h1 className="text-3xl font-bold">Minecraft Server Dashboard</h1>
+          <p className="mt-2 text-muted-foreground">
             Configure and manage your Minecraft server.
           </p>
-        </div>
+        </header>
 
-        {/* STATUS CARD */}
+        {/* STATUS */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Server Status
               <Badge variant="secondary" className="flex items-center gap-2">
                 <span
-                  className={`h-2 w-2 rounded-full ${STATUS_COLOR[serverStatus]}`}
+                  className={`size-2 rounded-full ${STATUS_META[status].color
+                    }`}
                 />
-                {STATUS_LABEL[serverStatus]}
+                {STATUS_META[status].label}
               </Badge>
             </CardTitle>
           </CardHeader>
         </Card>
 
-        {/* CONFIG CARD */}
+        {/* CONFIGURATION */}
         <Card>
           <CardHeader>
             <CardTitle>Server Configuration</CardTitle>
@@ -118,15 +119,27 @@ export default function Dashboard() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               {/* Version */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Minecraft Version</label>
-                <VersionSelect value={version} onChange={setVersion} />
+              <div>
+                <label className="block text-sm font-medium">
+                  Minecraft Version
+                </label>
+                <VersionSelect
+                  value={config.version}
+                  onChange={(v) =>
+                    setConfig((prev) => ({ ...prev, version: v }))
+                  }
+                />
               </div>
 
               {/* Type */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Server Type</label>
-                <Select value={type} onValueChange={setServerType}>
+              <div>
+                <label className="block text-sm font-medium">Server Type</label>
+                <Select
+                  value={config.type}
+                  onValueChange={(v) =>
+                    setConfig((prev) => ({ ...prev, type: v }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select server type" />
                   </SelectTrigger>
@@ -143,71 +156,67 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Actions */}
+            {/* ACTIONS */}
             <div className="flex gap-3 pt-4">
-              {serverStatus === "STOPPED" ? (
+              {status === "STOPPED" ? (
                 <Button
-                  onClick={handleStartServer}
-                  disabled={disableStart}
+                  onClick={handleStart}
+                  disabled={!canStart}
                   className="flex items-center gap-2"
                 >
                   {isStarting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    <Play className="h-4 w-4" />
+                    <Play className="size-4" />
                   )}
                   Start Server
                 </Button>
               ) : (
                 <Button
-                  onClick={handleStopServer}
+                  onClick={handleStop}
                   variant="destructive"
                   className="flex items-center gap-2"
                 >
-                  <Square className="h-4 w-4" />
+                  <Square className="size-4" />
                   Stop Server
                 </Button>
               )}
             </div>
 
-            {version && type && (
-              <div className="rounded-lg bg-blue-50 p-3">
-                <p className="text-sm text-blue-800">
-                  <strong>Selected Configuration:</strong> {type} server running
-                  Minecraft {version}
-                </p>
-              </div>
+            {config.version && config.type && (
+              <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
+                <strong>Selected:</strong> {config.type} &middot;{" "}
+                {config.version}
+              </p>
             )}
           </CardContent>
         </Card>
 
-        {/* INFORMATION CARD */}
-        {serverStatus === "RUNNING" && (
+        {/* LIVE INFO */}
+        {status === "RUNNING" && (
           <Card>
             <CardHeader>
               <CardTitle>Server Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 text-sm md:grid-cols-2">
-                <InfoRow label="Server IP" value={serverStatusRaw?.publicIp ?? "-"} />
-                <InfoRow label="Port" value="25565" />
-                <InfoRow label="Players Online" value="0/20" />
-                <InfoRow label="Uptime" value="Just started" />
-              </div>
+            <CardContent className="space-y-2">
+              <InfoRow label="Server IP" value={statusData?.publicIp ?? "-"} />
+              <InfoRow label="Port" value="25565" />
+              <InfoRow label="Players Online" value="0/20" />
+              <InfoRow label="Uptime" value="Just started" />
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <span className="font-medium">{label}:</span>
-      <p className="text-gray-600">{value}</p>
-    </div>
+    <p className="grid grid-cols-[130px_1fr] text-sm">
+      <span className="font-medium">{label}</span>
+      <span className="text-muted-foreground">{value}</span>
+    </p>
   );
 }
 

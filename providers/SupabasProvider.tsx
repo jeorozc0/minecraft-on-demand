@@ -24,7 +24,6 @@ export function SupabaseProvider({
   initialSession: Session | null;
   children: ReactNode;
 }) {
-  // memoise one browser client for the lifetime of this tab
   const [supabase] = useState(createClient);
   const [session, setSession] = useState(initialSession);
 

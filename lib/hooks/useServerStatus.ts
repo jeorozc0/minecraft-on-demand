@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
@@ -15,15 +16,12 @@ export interface RawServerResponse {
 }
 
 class StatusError extends Error {
-  retryAfter: number;
-  constructor(message: string, retryAfter: number) {
-    super(message);
-    this.retryAfter = retryAfter;
+  constructor(msg: string) {
+    super(msg);
   }
 }
 
-const DEFAULT_POLL_SEC = 15;
-
+/* ─── API fetcher ─── */
 const fetchServerStatus = async (
   serverId: string,
 ): Promise<RawServerResponse> => {
@@ -31,39 +29,20 @@ const fetchServerStatus = async (
     `https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers/${serverId}`,
     { cache: "no-store" },
   );
-
-  const retryAfterHdr = res.headers.get("Retry-After");
-  const retryAfter =
-    retryAfterHdr ? parseInt(retryAfterHdr, 10) : DEFAULT_POLL_SEC;
-
   if (!res.ok) {
-    throw new StatusError(
-      `Failed to fetch server status: ${res.status}`,
-      retryAfter,
-    );
+    throw new StatusError(`Failed to fetch status (${res.status})`);
   }
-
-  return res.json() as Promise<RawServerResponse>;
+  return res.json();
 };
 
-export const useMcServerStatus = (
-  serverId = "opwd9hi6i3vi",
-  enabled = true,
-) =>
+export const useMcServerStatus = (serverId?: string) =>
   useQuery<RawServerResponse, StatusError>({
     queryKey: ["mcStatus", serverId],
-    queryFn: () => fetchServerStatus(serverId),
-    enabled,
-
-    refetchInterval: (query) => {
-      const intervalErr = query.state.error?.retryAfter;
-      const intervalData = query.state.data ? DEFAULT_POLL_SEC : undefined;
-      const chosen = intervalErr ?? intervalData ?? DEFAULT_POLL_SEC;
-      return chosen * 1000;
-    },
-
+    queryFn: () => fetchServerStatus(serverId!),
+    enabled: !!serverId,             // only run when id is provided
+    refetchInterval: 15_000,                // every 15 s
+    refetchIntervalInBackground: true,      // keep polling when tab is hidden
+    staleTime: 15_000,                      // match interval
     retry: 3,
-    staleTime: 10_000,
-    refetchIntervalInBackground: false,
   });
 
