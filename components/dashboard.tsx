@@ -205,9 +205,6 @@ export default function Dashboard() {
                 value={statusData?.publicIp ?? "-"}
                 tooltip="IP may take a minute or two to become reachable."
               />
-              <InfoRow label="Port" value="25565" />
-              <InfoRow label="Players Online" value="0/20" />
-              <InfoRow label="Uptime" value="Just started" />
             </CardContent>
           </Card>
         )}
