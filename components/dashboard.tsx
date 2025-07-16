@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Square, Loader2 } from "lucide-react";
+import { Play, Square, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
@@ -21,6 +21,7 @@ import {
   type StartServerResponse,
 } from "@/lib/hooks/useServer";
 import { useMcServerStatus } from "@/lib/hooks/useServerStatus";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
 const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
@@ -85,7 +86,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background p-6">
+    <main className="h-screen overflow-hidden bg-background p-6">
       <section className="mx-auto max-w-2xl space-y-6">
         {/* HEADER */}
         <header className="text-center">
@@ -199,7 +200,11 @@ export default function Dashboard() {
               <CardTitle>Server Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <InfoRow label="Server IP" value={statusData?.publicIp ?? "-"} />
+              <InfoRow
+                label="Server IP"
+                value={statusData?.publicIp ?? "-"}
+                tooltip="IP may take a minute or two to become reachable."
+              />
               <InfoRow label="Port" value="25565" />
               <InfoRow label="Players Online" value="0/20" />
               <InfoRow label="Uptime" value="Just started" />
@@ -211,12 +216,32 @@ export default function Dashboard() {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({
+  label,
+  value,
+  tooltip,
+}: {
+  label: string;
+  value: string;
+  tooltip?: string;
+}) {
   return (
-    <p className="grid grid-cols-[130px_1fr] text-sm">
+    <div className="grid grid-cols-[130px_1fr] items-center text-sm gap-1">
       <span className="font-medium">{label}</span>
-      <span className="text-muted-foreground">{value}</span>
-    </p>
+      <span className="flex items-center gap-1 text-gray-600">
+        {value}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 cursor-default text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={4}>
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
+    </div>
   );
 }
 

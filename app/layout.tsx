@@ -38,8 +38,8 @@ export default async function RootLayout({
         >
           <SupabaseProvider initialSession={session}>
             {children}
-            <Toaster />
-            {children}</SupabaseProvider>
+            <Toaster richColors />
+          </SupabaseProvider>
         </body>
       </html>
     </ReactQueryClientProvider>
