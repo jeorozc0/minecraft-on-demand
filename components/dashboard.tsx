@@ -1,194 +1,244 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, Play, Square } from "lucide-react"
+import { useState, useCallback, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Play, Square, Loader2, Info } from "lucide-react";
+import { toast } from "sonner";
 
-type ServerStatus = "offline" | "starting" | "online" | "stopping"
+import { VersionSelect } from "@/components/ui/minecraft-version-select";
+import {
+  useStartServer,
+  type StartServerPayload,
+  type StartServerResponse,
+} from "@/lib/hooks/useServer";
+import { useMcServerStatus } from "@/lib/hooks/useServerStatus";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
+
+const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
+  PENDING: { color: "bg-yellow-500", label: "Pending…" },
+  RUNNING: { color: "bg-green-500", label: "Running" },
+  STOPPED: { color: "bg-red-500", label: "Stopped" },
+};
 
 export default function Dashboard() {
-  const [version, setVersion] = useState("")
-  const [serverType, setServerType] = useState("")
-  const [serverStatus, setServerStatus] = useState<ServerStatus>("offline")
-  const [isLoading, setIsLoading] = useState(false)
+  const [config, setConfig] = useState<{ version: string; type: string }>({
+    version: "",
+    type: "",
+  });
 
-  const handleStartServer = async () => {
-    if (!version || !serverType) {
-      alert("Please select both version and server type")
-      return
+  const [serverId, setServerId] = useState<string>();
+
+  const {
+    mutate: startServer,
+    isPending: isStarting,
+  } = useStartServer();
+
+  const { data: statusData } = useMcServerStatus(serverId);
+  const status: ServerStatus = statusData?.serverStatus ?? "STOPPED";
+
+  const canStart = useMemo(
+    () =>
+      !isStarting &&
+      Boolean(config.version) &&
+      Boolean(config.type) &&
+      status === "STOPPED",
+    [isStarting, config, status],
+  );
+
+  const handleStart = useCallback(() => {
+    const { version, type } = config;
+    if (!version || !type) {
+      toast.error("Missing configuration", {
+        description: "Select both a version and a server type first.",
+      });
+      return;
     }
 
-    setIsLoading(true)
-    setServerStatus("starting")
+    startServer(
+      { version, type } as StartServerPayload,
+      {
+        onSuccess: (data: StartServerResponse) => {
+          setServerId(data.serverId);
+          toast.success("Server startup initiated", {
+            description: "Give it a minute while we spin things up…",
+          });
+        },
+        onError: (err: unknown) =>
+          toast.error("Network error", {
+            description: err instanceof Error ? err.message : String(err),
+          }),
+      },
+    );
+  }, [config, startServer]);
 
-    setTimeout(() => {
-      setServerStatus("online")
-      setIsLoading(false)
-    }, 3000)
-  }
-
-  const handleStopServer = () => {
-    setServerStatus("stopping")
-    setTimeout(() => {
-      setServerStatus("offline")
-    }, 2000)
-  }
-
-  const getStatusColor = (status: ServerStatus) => {
-    switch (status) {
-      case "online":
-        return "bg-green-500"
-      case "starting":
-        return "bg-yellow-500"
-      case "stopping":
-        return "bg-orange-500"
-      case "offline":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const getStatusText = (status: ServerStatus) => {
-    switch (status) {
-      case "online":
-        return "Online"
-      case "starting":
-        return "Starting..."
-      case "stopping":
-        return "Stopping..."
-      case "offline":
-        return "Offline"
-      default:
-        return "Unknown"
-    }
-  }
+  const handleStop = useCallback(() => {
+    toast("Stopping not implemented yet");
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Minecraft Server Dashboard</h1>
-          <p className="text-gray-600 mt-2">Configure and manage your Minecraft server</p>
-        </div>
+    <main className="h-screen overflow-hidden bg-background p-6">
+      <section className="mx-auto max-w-2xl space-y-6">
+        {/* HEADER */}
+        <header className="text-center">
+          <h1 className="text-3xl font-bold">Minecraft Server Dashboard</h1>
+          <p className="mt-2 text-muted-foreground">
+            Configure and manage your Minecraft server.
+          </p>
+        </header>
 
-        {/* Server Status Card */}
+        {/* STATUS */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Server Status
               <Badge variant="secondary" className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${getStatusColor(serverStatus)}`} />
-                {getStatusText(serverStatus)}
+                <span
+                  className={`size-2 rounded-full ${STATUS_META[status].color
+                    }`}
+                />
+                {STATUS_META[status].label}
               </Badge>
             </CardTitle>
           </CardHeader>
         </Card>
 
-        {/* Server Configuration Card */}
+        {/* CONFIGURATION */}
         <Card>
           <CardHeader>
             <CardTitle>Server Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Minecraft Version</label>
-                <Select value={version} onValueChange={setVersion}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select version" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1.20.4">1.20.4</SelectItem>
-                    <SelectItem value="1.20.3">1.20.3</SelectItem>
-                    <SelectItem value="1.20.2">1.20.2</SelectItem>
-                    <SelectItem value="1.20.1">1.20.1</SelectItem>
-                    <SelectItem value="1.19.4">1.19.4</SelectItem>
-                    <SelectItem value="1.19.3">1.19.3</SelectItem>
-                    <SelectItem value="1.18.2">1.18.2</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Version */}
+              <div>
+                <label className="block text-sm font-medium">
+                  Minecraft Version
+                </label>
+                <VersionSelect
+                  value={config.version}
+                  onChange={(v) =>
+                    setConfig((prev) => ({ ...prev, version: v }))
+                  }
+                />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Server Type</label>
-                <Select value={serverType} onValueChange={setServerType}>
+              {/* Type */}
+              <div>
+                <label className="block text-sm font-medium">Server Type</label>
+                <Select
+                  value={config.type}
+                  onValueChange={(v) =>
+                    setConfig((prev) => ({ ...prev, type: v }))
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select server type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vanilla">Vanilla</SelectItem>
-                    <SelectItem value="paper">Paper</SelectItem>
-                    <SelectItem value="spigot">Spigot</SelectItem>
-                    <SelectItem value="fabric">Fabric</SelectItem>
-                    <SelectItem value="forge">Forge</SelectItem>
-                    <SelectItem value="bukkit">Bukkit</SelectItem>
+                    {["VANILLA", "PAPER", "SPIGOT", "FABRIC", "FORGE"].map(
+                      (t) => (
+                        <SelectItem key={t} value={t}>
+                          {t.charAt(0) + t.slice(1).toLowerCase()}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
+            {/* ACTIONS */}
             <div className="flex gap-3 pt-4">
-              {serverStatus === "offline" ? (
-                <Button onClick={handleStartServer} disabled={isLoading} className="flex items-center gap-2">
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              {status === "STOPPED" ? (
+                <Button
+                  onClick={handleStart}
+                  disabled={!canStart}
+                  className="flex items-center gap-2"
+                >
+                  {isStarting ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Play className="size-4" />
+                  )}
                   Start Server
                 </Button>
               ) : (
                 <Button
-                  onClick={handleStopServer}
+                  onClick={handleStop}
                   variant="destructive"
-                  disabled={serverStatus === "stopping"}
                   className="flex items-center gap-2"
                 >
-                  <Square className="w-4 h-4" />
+                  <Square className="size-4" />
                   Stop Server
                 </Button>
               )}
             </div>
 
-            {version && serverType && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Selected Configuration:</strong> {serverType} server running Minecraft {version}
-                </p>
-              </div>
+            {config.version && config.type && (
+              <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
+                <strong>Selected:</strong> {config.type} &middot;{" "}
+                {config.version}
+              </p>
             )}
           </CardContent>
         </Card>
 
-        {/* Server Info Card (when online) */}
-        {serverStatus === "online" && (
+        {/* LIVE INFO */}
+        {status === "RUNNING" && (
           <Card>
             <CardHeader>
               <CardTitle>Server Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium">Server IP:</span>
-                  <p className="text-gray-600">play.yourserver.com</p>
-                </div>
-                <div>
-                  <span className="font-medium">Port:</span>
-                  <p className="text-gray-600">25565</p>
-                </div>
-                <div>
-                  <span className="font-medium">Players Online:</span>
-                  <p className="text-gray-600">0/20</p>
-                </div>
-                <div>
-                  <span className="font-medium">Uptime:</span>
-                  <p className="text-gray-600">Just started</p>
-                </div>
-              </div>
+            <CardContent className="space-y-2">
+              <InfoRow
+                label="Server IP"
+                value={statusData?.publicIp ?? "-"}
+                tooltip="IP may take a minute or two to become reachable."
+              />
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
-  )
+      </section>
+    </main>
+  );
 }
+
+function InfoRow({
+  label,
+  value,
+  tooltip,
+}: {
+  label: string;
+  value: string;
+  tooltip?: string;
+}) {
+  return (
+    <div className="grid grid-cols-[130px_1fr] items-center text-sm gap-1">
+      <span className="font-medium">{label}</span>
+      <span className="flex items-center gap-1 text-gray-600">
+        {value}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3 w-3 cursor-default text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={4}>
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </span>
+    </div>
+  );
+}
+
