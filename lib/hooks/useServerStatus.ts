@@ -39,7 +39,7 @@ export const useMcServerStatus = (serverId?: string) =>
   useQuery<RawServerResponse, StatusError>({
     queryKey: ["mcStatus", serverId],
     queryFn: () => fetchServerStatus(serverId!),
-    enabled: !!serverId,             // only run when id is provided
+    enabled: Boolean(serverId),             // only run when id is provided
     refetchInterval: 15_000,                // every 15 s
     refetchIntervalInBackground: true,      // keep polling when tab is hidden
     staleTime: 15_000,                      // match interval
