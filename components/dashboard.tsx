@@ -13,15 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Play, Square, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
-
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
-import {
-  useStartServer,
-  type StartServerPayload,
-  type StartServerResponse,
-} from "@/lib/hooks/useServer";
-import { useMcServerStatus } from "@/lib/hooks/useServerStatus";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useServerManager } from "@/lib/hooks/useServerManager";
+
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
 const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
@@ -31,32 +26,23 @@ const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
 };
 
 export default function Dashboard() {
-  const [config, setConfig] = useState<{ version: string; type: string }>({
+  const {
+    isLoading,
+    isStarting,
+    status,
+    config,
+    publicIp,
+    hasActiveServer,
+    startServer,
+  } = useServerManager();
+
+  const [formConfig, setFormConfig] = useState<{ version: string; type: string }>({
     version: "",
     type: "",
   });
 
-  const [serverId, setServerId] = useState<string>();
-
-  const {
-    mutate: startServer,
-    isPending: isStarting,
-  } = useStartServer();
-
-  const { data: statusData } = useMcServerStatus(serverId);
-  const status: ServerStatus = statusData?.serverStatus ?? "STOPPED";
-
-  const canStart = useMemo(
-    () =>
-      !isStarting &&
-      Boolean(config.version) &&
-      Boolean(config.type) &&
-      status === "STOPPED",
-    [isStarting, config, status],
-  );
-
   const handleStart = useCallback(() => {
-    const { version, type } = config;
+    const { version, type } = formConfig;
     if (!version || !type) {
       toast.error("Missing configuration", {
         description: "Select both a version and a server type first.",
@@ -65,10 +51,9 @@ export default function Dashboard() {
     }
 
     startServer(
-      { version, type } as StartServerPayload,
+      { version, type },
       {
-        onSuccess: (data: StartServerResponse) => {
-          setServerId(data.serverId);
+        onSuccess: () => {
           toast.success("Server startup initiated", {
             description: "Give it a minute while we spin things up…",
           });
@@ -79,11 +64,29 @@ export default function Dashboard() {
           }),
       },
     );
-  }, [config, startServer]);
+  }, [formConfig, startServer]);
 
   const handleStop = useCallback(() => {
     toast("Stopping not implemented yet");
   }, []);
+
+  const canStart = useMemo(
+    () =>
+      !isStarting &&
+      Boolean(formConfig.version) &&
+      Boolean(formConfig.type) &&
+      status === "STOPPED",
+    [isStarting, formConfig, status],
+  );
+
+  if (isLoading) {
+    return (
+      <main className="flex h-screen items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <p className="ml-4">Checking for your server...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="h-screen overflow-hidden bg-background p-6">
@@ -103,8 +106,7 @@ export default function Dashboard() {
               Server Status
               <Badge variant="secondary" className="flex items-center gap-2">
                 <span
-                  className={`size-2 rounded-full ${STATUS_META[status].color
-                    }`}
+                  className={`size-2 rounded-full ${STATUS_META[status].color}`}
                 />
                 {STATUS_META[status].label}
               </Badge>
@@ -125,10 +127,11 @@ export default function Dashboard() {
                   Minecraft Version
                 </label>
                 <VersionSelect
-                  value={config.version}
+                  value={formConfig.version}
                   onChange={(v) =>
-                    setConfig((prev) => ({ ...prev, version: v }))
+                    setFormConfig((prev) => ({ ...prev, version: v }))
                   }
+                  disabled={hasActiveServer}
                 />
               </div>
 
@@ -136,10 +139,11 @@ export default function Dashboard() {
               <div>
                 <label className="block text-sm font-medium">Server Type</label>
                 <Select
-                  value={config.type}
+                  value={formConfig.type}
                   onValueChange={(v) =>
-                    setConfig((prev) => ({ ...prev, type: v }))
+                    setFormConfig((prev) => ({ ...prev, type: v }))
                   }
+                  disabled={hasActiveServer}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select server type" />
@@ -159,7 +163,7 @@ export default function Dashboard() {
 
             {/* ACTIONS */}
             <div className="flex gap-3 pt-4">
-              {status === "STOPPED" ? (
+              {!hasActiveServer ? (
                 <Button
                   onClick={handleStart}
                   disabled={!canStart}
@@ -184,10 +188,10 @@ export default function Dashboard() {
               )}
             </div>
 
-            {config.version && config.type && (
+            {formConfig.version && formConfig.type && !hasActiveServer && (
               <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
-                <strong>Selected:</strong> {config.type} &middot;{" "}
-                {config.version}
+                <strong>Selected:</strong> {formConfig.type} &middot;{" "}
+                {formConfig.version}
               </p>
             )}
           </CardContent>
@@ -202,8 +206,12 @@ export default function Dashboard() {
             <CardContent className="space-y-2">
               <InfoRow
                 label="Server IP"
-                value={statusData?.publicIp ?? "-"}
+                value={publicIp ?? "-"}
                 tooltip="IP may take a minute or two to become reachable."
+              />
+              <InfoRow
+                label="Version"
+                value={`${config.type} ${config.version}`}
               />
             </CardContent>
           </Card>
@@ -241,4 +249,3 @@ function InfoRow({
     </div>
   );
 }
-

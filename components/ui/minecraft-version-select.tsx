@@ -16,12 +16,14 @@ interface VersionSelectProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function VersionSelect({
   value,
   onChange,
   className = "",
+  disabled
 }: VersionSelectProps) {
   const { data: versions, isLoading, isError } = useMinecraftVersions();
 
@@ -33,7 +35,7 @@ export function VersionSelect({
   }, [value, versions, onChange]);
 
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
       <SelectTrigger className={className}>
         {isLoading ? (
           <div className="flex items-center">

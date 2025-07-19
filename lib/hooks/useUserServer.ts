@@ -1,0 +1,46 @@
+import { useQuery } from "@tanstack/react-query";
+import type { RawServerResponse } from "./useServerStatus";
+
+const fetchUserServer = async (
+  userId: string,
+  limit: number,
+): Promise<RawServerResponse | null> => {
+  const url = new URL(
+    "https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers",
+  );
+  url.searchParams.append("userId", userId);
+  url.searchParams.append("limit", limit.toString());
+
+  const res = await fetch(url, { cache: "no-store" });
+
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user server: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  if (Array.isArray(data) && data.length > 0) {
+    return data[0];
+  }
+  if (!Array.isArray(data) && data.serverId) {
+    return data;
+  }
+  return null;
+};
+
+export const useUserServer = (
+  userId?: string,
+  options?: { limit?: number },
+) => {
+
+  const { limit = 1 } = options ?? {};
+
+  return useQuery({
+    queryKey: ["userServer", userId, limit],
+    queryFn: () => fetchUserServer(userId!, limit),
+    enabled: !!userId,
+    retry: false,
+  });
+};
