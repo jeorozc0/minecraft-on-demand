@@ -131,6 +131,7 @@ export default function Dashboard() {
                   onChange={(v) =>
                     setFormConfig((prev) => ({ ...prev, version: v }))
                   }
+                  disabled={hasActiveServer}
                 />
               </div>
 
@@ -142,6 +143,7 @@ export default function Dashboard() {
                   onValueChange={(v) =>
                     setFormConfig((prev) => ({ ...prev, type: v }))
                   }
+                  disabled={hasActiveServer}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select server type" />

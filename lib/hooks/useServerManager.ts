@@ -1,9 +1,15 @@
+import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { useStartServer } from "./useServer";
 import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
 
 export const useServerManager = () => {
-  const { data: existingServer, isLoading: isLoadingUserServer } = useUserServer();
+  const { session } = useSupabaseSession();
+  const userId = session?.user.id;
+  const { data: existingServer, isLoading: isLoadingUserServer } = useUserServer(
+    userId,
+    { limit: 1 },
+  );
   const {
     data: newServerData,
     mutate: startServer,
