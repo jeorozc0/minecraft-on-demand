@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useServerManager } from "@/lib/hooks/useServerManager";
+import { capitalizeFirstLetter } from "@/utils";
 
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
@@ -128,7 +129,7 @@ export default function Dashboard() {
                 </label>
                 <VersionSelect
                   value={formConfig.version}
-                  onChange={(v) =>
+                  onChangeAction={(v) =>
                     setFormConfig((prev) => ({ ...prev, version: v }))
                   }
                   disabled={hasActiveServer}
@@ -190,7 +191,7 @@ export default function Dashboard() {
 
             {formConfig.version && formConfig.type && !hasActiveServer && (
               <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
-                <strong>Selected:</strong> {formConfig.type} &middot;{" "}
+                <strong>Selected:</strong> {capitalizeFirstLetter(formConfig.type)} &middot;{" "}
                 {formConfig.version}
               </p>
             )}

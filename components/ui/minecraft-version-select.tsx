@@ -14,14 +14,14 @@ import {
 
 interface VersionSelectProps {
   value: string;
-  onChange: (value: string) => void;
+  onChangeAction: (value: string) => void;
   className?: string;
   disabled?: boolean;
 }
 
 export function VersionSelect({
   value,
-  onChange,
+  onChangeAction,
   className = "",
   disabled
 }: VersionSelectProps) {
@@ -30,12 +30,12 @@ export function VersionSelect({
   // Set a default version if none selected and versions are loaded
   useEffect(() => {
     if (!value && versions && versions.length > 0) {
-      onChange(versions[0]);
+      onChangeAction(versions[0]);
     }
-  }, [value, versions, onChange]);
+  }, [value, versions, onChangeAction]);
 
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
+    <Select value={value} onValueChange={onChangeAction} disabled={disabled}>
       <SelectTrigger className={className}>
         {isLoading ? (
           <div className="flex items-center">
