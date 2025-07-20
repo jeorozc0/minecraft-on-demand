@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { RawServerResponse } from "./useServerStatus";
+import {getAccessToken} from "@/lib/utils";
+
 
 const fetchUserServer = async (
   userId: string,
@@ -11,7 +13,7 @@ const fetchUserServer = async (
   url.searchParams.append("userId", userId);
   url.searchParams.append("limit", limit.toString());
 
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(url, { cache: "no-store", headers: { Authorization: await getAccessToken() } });
 
   if (res.status === 404) {
     return null;

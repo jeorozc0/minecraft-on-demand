@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
+import {getAccessToken} from "@/lib/utils";
 
 const SERVER_URL =
   "https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers";
@@ -27,7 +28,7 @@ const startServerRequest = async (
 
   const res = await fetch(SERVER_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: await getAccessToken() },
     body: JSON.stringify(input),
   });
 

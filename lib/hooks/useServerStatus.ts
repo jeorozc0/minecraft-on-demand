@@ -1,5 +1,5 @@
-
-import { useQuery } from "@tanstack/react-query";
+import {useQuery} from "@tanstack/react-query";
+import {getAccessToken} from "@/lib/utils";
 
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
@@ -27,7 +27,7 @@ const fetchServerStatus = async (
 ): Promise<RawServerResponse> => {
   const res = await fetch(
     `https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers/${serverId}`,
-    { cache: "no-store" },
+    { cache: "no-store", headers: { Authorization: await getAccessToken() } },
   );
   if (!res.ok) {
     throw new StatusError(`Failed to fetch status (${res.status})`);
