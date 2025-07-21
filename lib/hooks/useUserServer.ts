@@ -1,14 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import type { RawServerResponse } from "./useServerStatus";
-import {getAccessToken} from "@/lib/utils";
+import { getAccessToken } from "@/lib/utils";
+import { API_URL } from "../constants";
 
 
 const fetchUserServer = async (
   userId: string,
   limit: number,
 ): Promise<RawServerResponse | null> => {
+
   const url = new URL(
-    "https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers",
+    API_URL,
   );
   url.searchParams.append("userId", userId);
   url.searchParams.append("limit", limit.toString());

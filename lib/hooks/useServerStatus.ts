@@ -1,5 +1,6 @@
-import {useQuery} from "@tanstack/react-query";
-import {getAccessToken} from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getAccessToken } from "@/lib/utils";
+import { API_URL } from "../constants";
 
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
@@ -25,8 +26,9 @@ class StatusError extends Error {
 const fetchServerStatus = async (
   serverId: string,
 ): Promise<RawServerResponse> => {
+
   const res = await fetch(
-    `https://lisifqtzud.execute-api.us-east-1.amazonaws.com/prod/servers/${serverId}`,
+    `${API_URL}/${serverId}`,
     { cache: "no-store", headers: { Authorization: await getAccessToken() } },
   );
   if (!res.ok) {
