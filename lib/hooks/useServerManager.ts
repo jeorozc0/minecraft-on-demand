@@ -2,6 +2,7 @@ import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { useStartServer } from "./useServer";
 import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
+import { useStopServer } from "./useStopServer";
 
 export const useServerManager = () => {
   const { session } = useSupabaseSession();
@@ -15,6 +16,12 @@ export const useServerManager = () => {
     mutate: startServer,
     isPending: isStarting,
   } = useStartServer();
+
+  const {
+    mutate: stopServer,
+    isPending: isStopping,
+  } = useStopServer();
+
 
   const activeServerId = newServerData?.serverId ?? existingServer?.serverId;
 
@@ -35,10 +42,13 @@ export const useServerManager = () => {
   return {
     isLoading: isLoadingUserServer,
     isStarting,
+    isStopping,
     status,
     config,
     publicIp,
+    activeServerId,
     hasActiveServer: !!activeServerId && status == "RUNNING",
     startServer,
+    stopServer
   };
 };

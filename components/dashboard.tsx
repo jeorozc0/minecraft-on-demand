@@ -11,12 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Square, Loader2, Info } from "lucide-react";
+import { Play, Square, Loader2, Info, DoorOpenIcon } from "lucide-react";
 import { toast } from "sonner";
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { useServerManager } from "@/lib/hooks/useServerManager";
+import logo from "@/public/raw-removebg-preview.png"
 import { capitalizeFirstLetter } from "@/utils";
+import React from "react";
+import Image from "next/image";
+import { ModeToggle } from "./ui/theme-toggle";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
 
@@ -30,17 +36,25 @@ export default function Dashboard() {
   const {
     isLoading,
     isStarting,
+    isStopping,
     status,
     config,
     publicIp,
+    activeServerId,
     hasActiveServer,
     startServer,
+    stopServer
   } = useServerManager();
+
 
   const [formConfig, setFormConfig] = useState<{ version: string; type: string }>({
     version: "",
     type: "",
   });
+  const supabase = createClient();
+  const router = useRouter();
+
+  const [disabled, setDisabled] = useState<boolean>(false);
 
   const handleStart = useCallback(() => {
     const { version, type } = formConfig;
@@ -58,6 +72,7 @@ export default function Dashboard() {
           toast.success("Server startup initiated", {
             description: "Give it a minute while we spin things up…",
           });
+          setDisabled(false);
         },
         onError: (err: unknown) =>
           toast.error("Network error", {
@@ -68,8 +83,29 @@ export default function Dashboard() {
   }, [formConfig, startServer]);
 
   const handleStop = useCallback(() => {
-    toast("Stopping not implemented yet");
-  }, []);
+    if (!activeServerId) {
+      toast.error("Cannot stop server", {
+        description: "No active server ID found.",
+      });
+      return;
+    }
+
+    stopServer(
+      { serverId: activeServerId as string },
+      {
+        onSuccess: () => {
+          toast.success("Server shutdown initiated", {
+            description: "The server is now stopping.",
+          });
+          setDisabled(true);
+        },
+        onError: (err) =>
+          toast.error("Network error", {
+            description: err instanceof Error ? err.message : String(err),
+          }),
+      },
+    );
+  }, [activeServerId, stopServer]);
 
   const canStart = useMemo(
     () =>
@@ -79,6 +115,12 @@ export default function Dashboard() {
       status === "STOPPED",
     [isStarting, formConfig, status],
   );
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh(); // Refresh to update session state across app
+    router.push('/login'); // Redirect to login after logout
+  };
 
   if (isLoading) {
     return (
@@ -90,17 +132,34 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-background p-6">
-      <section className="mx-auto max-w-2xl space-y-6">
-        {/* HEADER */}
-        <header className="text-center">
-          <h1 className="text-3xl font-bold">Minecraft Server Dashboard</h1>
+    <main className="h-screen overflow-hidden bg-background ">
+      {/* HEADER */}
+      <header className="w-full border-b py-2 px-10">
+        <div className="flex flex-row items-center justify-between">
+          <div className="relative h-10 w-10">
+            <Image
+              src={logo}
+              alt="Logo for the page"
+              fill
+              className="object-contain"
+            />
+          </div>
+          <div className="space-x-4">
+            <ModeToggle />
+            <Button variant="default" size="icon" onClick={handleLogout} className="cursor-pointer">
+              <DoorOpenIcon className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* STATUS */}
+      <section className="mx-auto w-full md:px-90 space-y-6 p-6">
+        <div className="w-full text-center">
           <p className="mt-2 text-muted-foreground">
             Configure and manage your Minecraft server.
           </p>
-        </header>
-
-        {/* STATUS */}
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -124,7 +183,7 @@ export default function Dashboard() {
             <div className="grid gap-4 md:grid-cols-2">
               {/* Version */}
               <div>
-                <label className="block text-sm font-medium">
+                <label className="block text-sm font-medium mb-1">
                   Minecraft Version
                 </label>
                 <VersionSelect
@@ -138,7 +197,7 @@ export default function Dashboard() {
 
               {/* Type */}
               <div>
-                <label className="block text-sm font-medium">Server Type</label>
+                <label className="block text-sm font-medium mb-1">Server Type</label>
                 <Select
                   value={formConfig.type}
                   onValueChange={(v) =>
@@ -182,8 +241,13 @@ export default function Dashboard() {
                   onClick={handleStop}
                   variant="destructive"
                   className="flex items-center gap-2"
+                  disabled={disabled}
                 >
-                  <Square className="size-4" />
+                  {isStopping ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Square className="size-4" />
+                  )}
                   Stop Server
                 </Button>
               )}
@@ -234,7 +298,7 @@ function InfoRow({
   return (
     <div className="grid grid-cols-[130px_1fr] items-center text-sm gap-1">
       <span className="font-medium">{label}</span>
-      <span className="flex items-center gap-1 text-gray-600">
+      <span className="flex items-center gap-1 text-gray-400">
         {value}
         {tooltip && (
           <Tooltip>
