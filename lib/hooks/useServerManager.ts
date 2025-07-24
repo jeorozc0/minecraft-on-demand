@@ -46,7 +46,7 @@ export const useServerManager = () => {
     status,
     config,
     publicIp,
-    hasActiveServer: !!activeServerId && status !== "STOPPED",
+    hasActiveServer: !!activeServerId && status == "RUNNING",
     startServer,
     stopServer
   };
