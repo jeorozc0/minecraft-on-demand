@@ -30,12 +30,15 @@ export default function Dashboard() {
   const {
     isLoading,
     isStarting,
+    isStopping,
     status,
     config,
     publicIp,
     hasActiveServer,
     startServer,
+    stopServer
   } = useServerManager();
+
 
   const [formConfig, setFormConfig] = useState<{ version: string; type: string }>({
     version: "",
@@ -68,8 +71,28 @@ export default function Dashboard() {
   }, [formConfig, startServer]);
 
   const handleStop = useCallback(() => {
-    toast("Stopping not implemented yet");
-  }, []);
+    if (!publicIp) {
+      toast.error("Cannot stop server", {
+        description: "No active server ID found.",
+      });
+      return;
+    }
+
+    stopServer(
+      { serverId: publicIp },
+      {
+        onSuccess: () => {
+          toast.success("Server shutdown initiated", {
+            description: "The server is now stopping.",
+          });
+        },
+        onError: (err) =>
+          toast.error("Network error", {
+            description: err instanceof Error ? err.message : String(err),
+          }),
+      },
+    );
+  }, [publicIp, stopServer]);
 
   const canStart = useMemo(
     () =>
@@ -183,7 +206,11 @@ export default function Dashboard() {
                   variant="destructive"
                   className="flex items-center gap-2"
                 >
-                  <Square className="size-4" />
+                  {isStopping ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Square className="size-4" />
+                  )}
                   Stop Server
                 </Button>
               )}
