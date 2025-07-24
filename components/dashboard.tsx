@@ -24,11 +24,12 @@ import { ModeToggle } from "./ui/theme-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
+export type ServerStatus = "PENDING" | "RUNNING" | "STOPPING" | "STOPPED";
 
 const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
   PENDING: { color: "bg-yellow-500", label: "Pending…" },
   RUNNING: { color: "bg-green-500", label: "Running" },
+  STOPPING: { color: "bg-yellow-500", label: "Stopping…" },
   STOPPED: { color: "bg-red-500", label: "Stopped" },
 };
 
