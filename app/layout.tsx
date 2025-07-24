@@ -5,6 +5,7 @@ import { ReactQueryClientProvider } from "@/components/react-query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/providers/SupabasProvider";
 import { createClient } from "@/utils/supabase/server";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,14 +33,21 @@ export default async function RootLayout({
   } = await supabase.auth.getSession();
   return (
     <ReactQueryClientProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <SupabaseProvider initialSession={session}>
-            {children}
-            <Toaster richColors />
-          </SupabaseProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <SupabaseProvider initialSession={session}>
+              {children}
+              <Toaster richColors />
+            </SupabaseProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ReactQueryClientProvider>
