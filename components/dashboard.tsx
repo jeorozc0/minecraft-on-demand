@@ -11,12 +11,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Square, Loader2, Info, DoorOpenIcon } from "lucide-react";
+import {
+  Play,
+  Square,
+  Loader2,
+  Info,
+  DoorOpenIcon,
+  Copy,
+} from "lucide-react";
 import { toast } from "sonner";
 import { VersionSelect } from "@/components/ui/minecraft-version-select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "./ui/tooltip";
 import { useServerManager } from "@/lib/hooks/useServerManager";
-import logo from "@/public/raw-removebg-preview.png"
+import logo from "@/public/raw-removebg-preview.png";
 import { capitalizeFirstLetter } from "@/utils";
 import React from "react";
 import Image from "next/image";
@@ -44,11 +55,13 @@ export default function Dashboard() {
     activeServerId,
     hasActiveServer,
     startServer,
-    stopServer
+    stopServer,
   } = useServerManager();
 
-
-  const [formConfig, setFormConfig] = useState<{ version: string; type: string }>({
+  const [formConfig, setFormConfig] = useState<{
+    version: string;
+    type: string;
+  }>({
     version: "",
     type: "",
   });
@@ -119,8 +132,8 @@ export default function Dashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.refresh(); // Refresh to update session state across app
-    router.push('/login'); // Redirect to login after logout
+    router.refresh();
+    router.push("/login");
   };
 
   if (isLoading) {
@@ -147,7 +160,12 @@ export default function Dashboard() {
           </div>
           <div className="space-x-4">
             <ModeToggle />
-            <Button variant="default" size="icon" onClick={handleLogout} className="cursor-pointer">
+            <Button
+              variant="default"
+              size="icon"
+              onClick={handleLogout}
+              className="cursor-pointer"
+            >
               <DoorOpenIcon className="h-5 w-5" />
             </Button>
           </div>
@@ -155,7 +173,7 @@ export default function Dashboard() {
       </header>
 
       {/* STATUS */}
-      <section className="mx-auto w-full md:px-90 space-y-6 p-6">
+      <section className="mx-auto w-full space-y-6 p-6 md:px-90">
         <div className="w-full text-center">
           <p className="mt-2 text-muted-foreground">
             Configure and manage your Minecraft server.
@@ -184,7 +202,7 @@ export default function Dashboard() {
             <div className="grid gap-4 md:grid-cols-2">
               {/* Version */}
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="mb-1 block text-sm font-medium">
                   Minecraft Version
                 </label>
                 <VersionSelect
@@ -198,7 +216,9 @@ export default function Dashboard() {
 
               {/* Type */}
               <div>
-                <label className="block text-sm font-medium mb-1">Server Type</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Server Type
+                </label>
                 <Select
                   value={formConfig.type}
                   onValueChange={(v) =>
@@ -256,7 +276,8 @@ export default function Dashboard() {
 
             {formConfig.version && formConfig.type && !hasActiveServer && (
               <p className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
-                <strong>Selected:</strong> {capitalizeFirstLetter(formConfig.type)} &middot;{" "}
+                <strong>Selected:</strong>{" "}
+                {capitalizeFirstLetter(formConfig.type)} &middot;{" "}
                 {formConfig.version}
               </p>
             )}
@@ -274,6 +295,7 @@ export default function Dashboard() {
                 label="Server IP"
                 value={publicIp ?? "-"}
                 tooltip="IP may take a minute or two to become reachable."
+                isCopyable
               />
               <InfoRow
                 label="Version"
@@ -291,17 +313,50 @@ function InfoRow({
   label,
   value,
   tooltip,
+  isCopyable,
 }: {
   label: string;
   value: string;
   tooltip?: string;
+  isCopyable?: boolean;
 }) {
+  const handleCopy = () => {
+    if (!value || value === "-") return;
+    navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        toast.success("Server IP copied!");
+      })
+      .catch((err) => {
+        toast.error("Failed to copy IP", {
+          description: err instanceof Error ? err.message : String(err),
+        });
+      });
+  };
+
   return (
-    <div className="grid grid-cols-[130px_1fr] items-center text-sm gap-1">
+    <div className="grid grid-cols-[130px_1fr] items-center gap-1 text-sm">
       <span className="font-medium">{label}</span>
-      <span className="flex items-center gap-1 text-gray-400">
+      <span className="flex items-center gap-2 text-gray-400">
         {value}
-        {tooltip && (
+        {isCopyable && value && value !== "-" && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={handleCopy}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={4}>
+              <p>Copy IP</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {tooltip && !isCopyable && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="h-3 w-3 cursor-default text-muted-foreground" />
