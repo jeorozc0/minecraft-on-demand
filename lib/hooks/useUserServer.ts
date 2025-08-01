@@ -3,19 +3,27 @@ import type { RawServerResponse } from "./useServerStatus";
 import { getAccessToken } from "@/lib/utils";
 import { API_URL } from "../constants";
 
+interface PagedServerResponse {
+  items: RawServerResponse[];
+  afterKey: string;
+}
 
 const fetchUserServer = async (
-  userId: string,
   limit: number,
+  afterKey?: string,
 ): Promise<RawServerResponse | null> => {
 
   const url = new URL(
     API_URL,
   );
-  url.searchParams.append("userId", userId);
   url.searchParams.append("limit", limit.toString());
+  if (afterKey) {
+    url.searchParams.append("afterKey", afterKey);
+  }
 
-  const res = await fetch(url, { cache: "no-store", headers: { Authorization: await getAccessToken() } });
+  const res = await fetch(url, {
+    cache: "no-store", headers: { Authorization: await getAccessToken() }
+  });
 
   if (res.status === 404) {
     return null;
@@ -24,26 +32,20 @@ const fetchUserServer = async (
     throw new Error(`Failed to fetch user server: ${res.statusText}`);
   }
 
-  const data = await res.json();
-  if (Array.isArray(data) && data.length > 0) {
-    return data[0];
-  }
-  if (!Array.isArray(data) && data.serverId) {
-    return data;
-  }
-  return null;
+  const data = await res.json() as PagedServerResponse;
+  return data.items.length > 0 ? data.items[0] : null;
 };
 
 export const useUserServer = (
   userId?: string,
-  options?: { limit?: number },
+  options?: { limit?: number; afterKey?: string },
 ) => {
 
-  const { limit = 1 } = options ?? {};
+  const { limit = 1, afterKey } = options ?? {};
 
   return useQuery({
-    queryKey: ["userServer", userId, limit],
-    queryFn: () => fetchUserServer(userId!, limit),
+    queryKey: ["userServer", limit, afterKey],
+    queryFn: () => fetchUserServer(limit, afterKey),
     enabled: !!userId,
     retry: false,
   });
