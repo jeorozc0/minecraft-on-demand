@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { getAccessToken } from "@/lib/utils";
 import { API_URL } from "../constants";
-import ServerConfigurationPayloadSchema from "../types/config";
+import { ServerConfigurationSchema } from "../types/config";
 
-type ServerConfiguration = z.infer<typeof ServerConfigurationPayloadSchema>;
+type ServerConfiguration = z.infer<typeof ServerConfigurationSchema>;
 
 class StatusError extends Error {
   public readonly status: number;
@@ -15,23 +15,40 @@ class StatusError extends Error {
   }
 }
 
-const fetchServerConfiguration = async (): Promise<ServerConfiguration> => {
+// The function now returns Promise<ServerConfiguration | null>
+const fetchServerConfiguration = async (): Promise<ServerConfiguration | null> => {
   const res = await fetch(`${API_URL}/server-configuration`, {
     cache: "no-store",
     headers: { Authorization: await getAccessToken() },
   });
 
+  // **NEW**: Handle 404 Not Found as a valid case (no config exists)
+  if (res.status === 404) {
+    return null;
+  }
+
   if (!res.ok) {
-    throw new StatusError(`Failed to fetch configuration (${res.status})`, res.status);
+    throw new StatusError(
+      `Failed to fetch configuration (${res.status})`,
+      res.status,
+    );
   }
 
   const data = await res.json();
 
-  return ServerConfigurationPayloadSchema.parse(data);
+  return ServerConfigurationSchema.parse(data);
 };
 
 export const useMcServerConfiguration = () =>
-  useQuery<ServerConfiguration, Error>({
+  // The query can now resolve to ServerConfiguration or null
+  useQuery<ServerConfiguration | null, Error>({
     queryKey: ["config"],
     queryFn: fetchServerConfiguration,
+    // It's good practice to disable retries for 404s
+    retry: (failureCount, error) => {
+      if (error instanceof StatusError && error.status === 404) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
