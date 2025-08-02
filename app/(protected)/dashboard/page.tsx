@@ -172,7 +172,7 @@ export default function Dashboard() {
             />
             <InfoRow
               label="Version"
-              value={`${capitalizeFirstLetter(config.type.S)} ${config.version.S}`}
+              value={`${capitalizeFirstLetter(config.type)} ${config.version}`}
             />
           </CardContent>
         </Card>
