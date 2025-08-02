@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./select";
+import { Label } from "./label";
 
 interface VersionSelectProps {
   value: string;
@@ -35,30 +36,33 @@ export function VersionSelect({
   }, [value, versions, onChangeAction]);
 
   return (
-    <Select value={value} onValueChange={onChangeAction} disabled={disabled}>
-      <SelectTrigger className={className}>
-        {isLoading ? (
-          <div className="flex items-center">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            <span>Loading versions...</span>
-          </div>
-        ) : (
-          <SelectValue placeholder="Select Minecraft version" />
-        )}
-      </SelectTrigger>
-      <SelectContent>
-        {isError ? (
-          <div className="p-2 text-center text-red-500">
-            Failed to load versions
-          </div>
-        ) : (
-          versions?.map((version) => (
-            <SelectItem key={version} value={version}>
-              {version}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
+    <div className="space-y-2">
+      <Label>Version</Label>
+      <Select value={value} onValueChange={onChangeAction} disabled={disabled}>
+        <SelectTrigger className={className}>
+          {isLoading ? (
+            <div className="flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span>Loading versions...</span>
+            </div>
+          ) : (
+            <SelectValue placeholder="Select Minecraft version" />
+          )}
+        </SelectTrigger>
+        <SelectContent>
+          {isError ? (
+            <div className="p-2 text-center text-red-500">
+              Failed to load versions
+            </div>
+          ) : (
+            versions?.map((version) => (
+              <SelectItem key={version} value={version}>
+                {version}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

@@ -37,14 +37,6 @@ export async function updateSession(request: NextRequest) {
     return res;
   }
 
-  if (user && !pathname.startsWith("/dashboard")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    const res = NextResponse.redirect(url);
-    copyCookies(supabaseResponse.cookies, res.cookies);
-    return res;
-  }
-
   return supabaseResponse;
 }
 

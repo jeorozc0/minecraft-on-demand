@@ -14,7 +14,7 @@ const fetchUserServer = async (
 ): Promise<RawServerResponse | null> => {
 
   const url = new URL(
-    API_URL,
+    `${API_URL}/servers`,
   );
   url.searchParams.append("limit", limit.toString());
   if (afterKey) {
