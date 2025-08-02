@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useServerManager } from "@/lib/hooks/useServerManager";
 import { type ServerStatus } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { capitalizeFirstLetter } from "@/utils";
 
 const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
   PENDING: { color: "bg-yellow-500", label: "Pending…" },
@@ -32,6 +33,7 @@ export default function Dashboard() {
     startServer,
     stopServer,
   } = useServerManager();
+
 
   const handleStart = useCallback(() => {
     // The start function no longer needs parameters.
@@ -170,7 +172,7 @@ export default function Dashboard() {
             />
             <InfoRow
               label="Version"
-              value={`${config.type} ${config.version}`}
+              value={`${capitalizeFirstLetter(config.type.S)} ${config.version.S}`}
             />
           </CardContent>
         </Card>
