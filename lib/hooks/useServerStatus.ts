@@ -28,7 +28,7 @@ const fetchServerStatus = async (
 ): Promise<RawServerResponse> => {
 
   const res = await fetch(
-    `${API_URL}/${serverId}`,
+    `${API_URL}/servers/${serverId}`,
     { cache: "no-store", headers: { Authorization: await getAccessToken() } },
   );
   if (!res.ok) {

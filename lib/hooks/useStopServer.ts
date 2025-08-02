@@ -19,7 +19,7 @@ const stopServerRequest = async (
 ): Promise<StopServerResponse> => {
   stopServerInputSchema.parse(input);
 
-  const res = await fetch(`${API_URL}/${input.serverId}`, {
+  const res = await fetch(`${API_URL}/servers/${input.serverId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

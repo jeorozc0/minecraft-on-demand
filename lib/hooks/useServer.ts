@@ -25,7 +25,7 @@ const startServerRequest = async (
 ): Promise<StartServerResponse> => {
   serverInputSchema.parse(input);
 
-  const res = await fetch(API_URL, {
+  const res = await fetch(`${API_URL}/servers`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: await getAccessToken() },
     body: JSON.stringify(input),

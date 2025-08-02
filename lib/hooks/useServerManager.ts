@@ -3,6 +3,7 @@ import { useStartServer } from "./useServer";
 import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
 import { useStopServer } from "./useStopServer";
+import { useMcServerConfiguration } from "./useServerConfig";
 
 export const useServerManager = () => {
   const { session } = useSupabaseSession();
@@ -25,6 +26,8 @@ export const useServerManager = () => {
 
   const activeServerId = newServerData?.serverId ?? existingServer?.serverId;
 
+  const { data: serverConfig } = useMcServerConfiguration();
+
   const { data: statusData } = useMcServerStatus(activeServerId);
 
   const status =
@@ -45,6 +48,7 @@ export const useServerManager = () => {
     isStopping,
     status,
     config,
+    serverConfig,
     publicIp,
     activeServerId,
     hasActiveServer: !!activeServerId && status == "RUNNING",
