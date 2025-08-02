@@ -1,4 +1,4 @@
-export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
+export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED" | "STOPPING";
 
 export interface RawServerResponse {
   serverId: string;

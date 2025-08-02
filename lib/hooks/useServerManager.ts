@@ -33,6 +33,8 @@ export const useServerManager = () => {
     existingServer?.serverStatus ??
     "STOPPED";
 
+  console.log(status);
+
   // This is the simple config for the running server.
   const config =
     statusData?.serverConfig ??

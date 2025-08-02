@@ -15,6 +15,7 @@ import { capitalizeFirstLetter } from "@/utils";
 const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
   PENDING: { color: "bg-yellow-500", label: "Pending…" },
   RUNNING: { color: "bg-green-500", label: "Running" },
+  STOPPING: { color: "bg-red-500", label: "Stopping…" },
   STOPPED: { color: "bg-red-500", label: "Stopped" },
 };
 
