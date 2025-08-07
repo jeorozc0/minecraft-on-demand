@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="accountSettings">
+    <option name="activeProfile" value="profile:AdministratorAccess-498777149664" />
+    <option name="activeRegion" value="us-east-1" />
+    <option name="recentlyUsedProfiles">
+      <list>
+        <option value="profile:AdministratorAccess-498777149664" />
+        <option value="profile:AdministratorAccess-533267195973" />
+      </list>
+    </option>
+    <option name="recentlyUsedRegions">
+      <list>
+        <option value="us-east-1" />
+      </list>
+    </option>
+  </component>
+  <component name="connectionManager">
+    <option name="activeConnectionId" value="sso-session:admin-vrfvega" />
+  </component>
+</project>

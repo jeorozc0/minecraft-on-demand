@@ -4,6 +4,8 @@ import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
 import { useStopServer } from "./useStopServer";
 import { useMcServerConfiguration } from "./useServerConfig";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const useServerManager = () => {
   const { session } = useSupabaseSession();
@@ -18,6 +20,7 @@ export const useServerManager = () => {
   } = useStartServer();
 
   const { mutate: stopServer, isPending: isStopping } = useStopServer();
+  const [isOptimisticStopping, setIsOptimisticStopping] = useState(false);
 
   const activeServerId = newServerData?.serverId ?? existingServer?.serverId;
 
@@ -25,15 +28,47 @@ export const useServerManager = () => {
   const { data: serverConfig, isLoading: isLoadingConfig } =
     useMcServerConfiguration();
 
-  const { data: statusData } = useMcServerStatus(activeServerId);
+  // Pass an override status to ensure transient states keep polling
+  const transientOverride: any = (isOptimisticStopping || isStopping) ? "STOPPING" : isStarting ? "PENDING" : undefined;
+  const { data: statusData } = useMcServerStatus(activeServerId, transientOverride);
 
   const status =
+    ((isOptimisticStopping || isStopping) && statusData?.serverStatus !== "STOPPED" ? "STOPPING" : undefined) ??
+    (isStarting ? "PENDING" : undefined) ??
     statusData?.serverStatus ??
     (newServerData ? "PENDING" : undefined) ??
     existingServer?.serverStatus ??
     "STOPPED";
 
-  console.log(status);
+  const queryClient = useQueryClient();
+  const prevVisibility = useRef<boolean>(true);
+  // On focus/visibility regain, perform a one-off refetch regardless of current state
+  useEffect(() => {
+    const onVisibility = () => {
+      const nowVisible = document.visibilityState === "visible";
+      if (nowVisible && prevVisibility.current === false) {
+        if (activeServerId && userId) {
+          queryClient.invalidateQueries({ queryKey: ["mcStatus", userId, activeServerId] });
+        }
+      }
+      prevVisibility.current = nowVisible;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
+  }, [activeServerId, userId, queryClient]);
+
+  // Release optimistic STOPPING once the backend reports STOPPED
+  useEffect(() => {
+    if (isOptimisticStopping && statusData?.serverStatus === "STOPPED") {
+      setIsOptimisticStopping(false);
+    }
+  }, [isOptimisticStopping, statusData?.serverStatus]);
+
+  //
 
   // This is the simple config for the running server.
   const config =
@@ -55,6 +90,16 @@ export const useServerManager = () => {
     // **NEW**: Expose whether a configuration exists.
     hasConfiguration: !!serverConfig,
     startServer,
-    stopServer,
+    stopServer: ((variables, options) => {
+      setIsOptimisticStopping(true);
+      return stopServer(variables as Parameters<typeof stopServer>[0], {
+        ...options,
+        onError: (error: unknown, vars: Parameters<typeof stopServer>[0], ctx: unknown) => {
+          setIsOptimisticStopping(false);
+          // @ts-expect-error preserve caller's types
+          options?.onError?.(error, vars, ctx);
+        },
+      } as Parameters<typeof stopServer>[1]);
+    }) as typeof stopServer,
   };
 };

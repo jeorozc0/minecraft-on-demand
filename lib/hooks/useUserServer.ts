@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { RawServerResponse } from "./useServerStatus";
-import { getAccessToken } from "@/lib/utils";
-import { API_URL } from "../constants";
+import { apiFetch, useAuthHeader } from "@/lib/api";
+import { useSupabaseSession } from "@/providers/SupabasProvider";
 
 interface PagedServerResponse {
   items: RawServerResponse[];
@@ -10,29 +10,20 @@ interface PagedServerResponse {
 
 const fetchUserServer = async (
   limit: number,
-  afterKey?: string,
+  afterKey: string | undefined,
+  auth: ReturnType<typeof useAuthHeader>,
 ): Promise<RawServerResponse | null> => {
 
-  const url = new URL(
-    `${API_URL}/servers`,
-  );
+  const url = new URL(`/servers`, window.location.origin);
   url.searchParams.append("limit", limit.toString());
   if (afterKey) {
     url.searchParams.append("afterKey", afterKey);
   }
 
-  const res = await fetch(url, {
-    cache: "no-store", headers: { Authorization: await getAccessToken() }
-  });
-
-  if (res.status === 404) {
-    return null;
-  }
-  if (!res.ok) {
-    throw new Error(`Failed to fetch user server: ${res.statusText}`);
-  }
-
-  const data = await res.json() as PagedServerResponse;
+  const data = await apiFetch<PagedServerResponse>(
+    url.pathname + url.search,
+    { cache: "no-store", authSession: auth },
+  );
   return data.items.length > 0 ? data.items[0] : null;
 };
 
@@ -42,11 +33,14 @@ export const useUserServer = (
 ) => {
 
   const { limit = 1, afterKey } = options ?? {};
+  const { session } = useSupabaseSession();
+  const authUserId = session?.user.id;
+  const auth = useAuthHeader();
 
   return useQuery({
-    queryKey: ["userServer", limit, afterKey],
-    queryFn: () => fetchUserServer(limit, afterKey),
-    enabled: !!userId,
+    queryKey: ["userServer", authUserId, limit, afterKey],
+    queryFn: () => fetchUserServer(limit, afterKey, auth),
+    enabled: !!authUserId,
     retry: false,
   });
 };

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { getAccessToken } from "@/lib/utils";
 import { API_URL } from "../constants";
@@ -33,12 +33,17 @@ const startServerRequest = async (): Promise<StartServerResponse> => {
 export const useStartServer = () => {
   const { session } = useSupabaseSession();
   const userId = session?.user.id;
+  const queryClient = useQueryClient();
 
   // The mutation no longer takes a payload.
   return useMutation<StartServerResponse, Error, void>({
     mutationFn: () => {
       if (!userId) throw new Error("User not authenticated");
       return startServerRequest();
+    },
+    onSuccess: ({ serverId }) => {
+      queryClient.invalidateQueries({ queryKey: ["userServer", userId] });
+      queryClient.invalidateQueries({ queryKey: ["mcStatus", userId, serverId] });
     },
   });
 };

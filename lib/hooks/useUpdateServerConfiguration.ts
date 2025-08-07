@@ -1,42 +1,34 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { toast } from "sonner";
-import { API_URL } from "../constants";
-import { getAccessToken } from "@/lib/utils";
+import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { ServerConfigurationSchema } from "../types/config";
+import { apiFetch, useAuthHeader } from "@/lib/api";
 
 type ServerConfiguration = z.infer<typeof ServerConfigurationSchema>;
 
-const updateServerConfiguration = async (config: ServerConfiguration) => {
-  const res = await fetch(`${API_URL}/server-configuration`, {
+const updateServerConfiguration = async (config: ServerConfiguration, auth: ReturnType<typeof useAuthHeader>) => {
+  return apiFetch(`/server-configuration`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: await getAccessToken(),
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(config),
+    authSession: auth,
   });
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    const errorMessage =
-      errorData.message || `Failed to update configuration (${res.status})`;
-    throw new Error(errorMessage);
-  }
-
-  return res.json();
 };
 
 export const useUpdateConfiguration = () => {
   const queryClient = useQueryClient();
+  const { session } = useSupabaseSession();
+  const userId = session?.user.id;
 
+  const auth = useAuthHeader();
   return useMutation({
-    mutationFn: updateServerConfiguration,
+    mutationFn: (conf: ServerConfiguration) => updateServerConfiguration(conf, auth),
     onSuccess: () => {
       toast.success("Configuration saved!", {
         description: "Your changes have been successfully applied.",
       });
-      queryClient.invalidateQueries({ queryKey: ["config"] });
+      queryClient.invalidateQueries({ queryKey: ["config", userId] });
     },
     onError: (err) => {
       toast.error("Save failed", {

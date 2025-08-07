@@ -37,6 +37,7 @@ export default function Dashboard() {
 
 
   const handleStart = useCallback(() => {
+    if (isStarting) return;
     // The start function no longer needs parameters.
     startServer(undefined, {
       onSuccess: () => {
@@ -49,9 +50,10 @@ export default function Dashboard() {
           description: err instanceof Error ? err.message : String(err),
         }),
     });
-  }, [startServer]);
+  }, [isStarting, startServer]);
 
   const handleStop = useCallback(() => {
+    if (isStopping) return;
     if (!activeServerId) {
       toast.error("Cannot stop server", {
         description: "No active server ID found.",
@@ -73,7 +75,7 @@ export default function Dashboard() {
           }),
       },
     );
-  }, [activeServerId, stopServer]);
+  }, [activeServerId, isStopping, stopServer]);
 
   if (isLoading) {
     return (
@@ -108,14 +110,14 @@ export default function Dashboard() {
             </Badge>
           </div>
 
-          {hasActiveServer ? (
+          {status === "RUNNING" || status === "STOPPING" || status === "PENDING" ? (
             <Button
               onClick={handleStop}
               variant="destructive"
               className="flex items-center gap-2"
-              disabled={isStopping || status === "PENDING"}
+              disabled={isStopping || status === "PENDING" || status === "STOPPING"}
             >
-              {isStopping || status === "PENDING" ? (
+              {isStopping || status === "PENDING" || status === "STOPPING" ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
                 <Square className="size-4" />

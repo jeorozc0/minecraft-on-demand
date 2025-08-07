@@ -1,20 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAccessToken } from "@/lib/utils";
-import { API_URL } from "../constants";
-
-export type ServerStatus = "PENDING" | "RUNNING" | "STOPPED";
-
-export interface RawServerResponse {
-  serverId: string;
-  startedAt: number | null;
-  endedAt: number | null;
-  serverStatus: ServerStatus;
-  serverConfig: {
-    type: string;
-    version: string;
-  };
-  publicIp?: string;
-}
+import type { RawServerResponse, ServerStatus } from "@/lib/types";
+import { apiFetch, useAuthHeader } from "@/lib/api";
+import { useSupabaseSession } from "@/providers/SupabasProvider";
 
 class StatusError extends Error {
   constructor(msg: string) {
@@ -22,29 +9,29 @@ class StatusError extends Error {
   }
 }
 
-/* ─── API fetcher ─── */
-const fetchServerStatus = async (
-  serverId: string,
-): Promise<RawServerResponse> => {
+export const useMcServerStatus = (serverId?: string, overrideStatus?: ServerStatus) => {
+  const { session } = useSupabaseSession();
+  const userId = session?.user.id;
+  const auth = useAuthHeader();
 
-  const res = await fetch(
-    `${API_URL}/servers/${serverId}`,
-    { cache: "no-store", headers: { Authorization: await getAccessToken() } },
-  );
-  if (!res.ok) {
-    throw new StatusError(`Failed to fetch status (${res.status})`);
-  }
-  return res.json();
-};
-
-export const useMcServerStatus = (serverId?: string) =>
-  useQuery<RawServerResponse, StatusError>({
-    queryKey: ["mcStatus", serverId],
-    queryFn: () => fetchServerStatus(serverId!),
-    enabled: Boolean(serverId),             // only run when id is provided
-    refetchInterval: 15_000,                // every 15 s
-    refetchIntervalInBackground: true,      // keep polling when tab is hidden
-    staleTime: 15_000,                      // match interval
+  return useQuery<RawServerResponse, StatusError>({
+    queryKey: ["mcStatus", userId, serverId],
+    queryFn: () => apiFetch<RawServerResponse>(`/servers/${serverId}`, { cache: "no-store", authSession: auth }),
+    enabled: Boolean(userId) && Boolean(serverId),
+    refetchInterval: (query) =>
+      computeStatusRefetchInterval(
+        overrideStatus ?? (query.state.data as RawServerResponse | undefined)?.serverStatus,
+      ),
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5_000,
     retry: 3,
   });
+};
+
+function computeStatusRefetchInterval(status?: ServerStatus): number | false {
+  if (!status) return 5_000;
+  if (status === "PENDING" || status === "STOPPING") return 5_000;
+  return false; // RUNNING and STOPPED do not poll
+}
 

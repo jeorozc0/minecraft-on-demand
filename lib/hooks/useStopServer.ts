@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { getAccessToken } from "@/lib/utils";
 import { API_URL } from "../constants";
@@ -37,6 +37,7 @@ const stopServerRequest = async (
 export const useStopServer = () => {
   const { session } = useSupabaseSession();
   const userId = session?.user.id;
+  const queryClient = useQueryClient();
 
   return useMutation<StopServerResponse, Error, StopServerInput>({
     mutationFn: (variables) => {
@@ -44,6 +45,10 @@ export const useStopServer = () => {
         return Promise.reject(new Error("User not authenticated"));
       }
       return stopServerRequest(variables);
+    },
+    onSuccess: ({ serverId }) => {
+      queryClient.invalidateQueries({ queryKey: ["userServer", userId] });
+      queryClient.invalidateQueries({ queryKey: ["mcStatus", userId, serverId] });
     },
   });
 };
