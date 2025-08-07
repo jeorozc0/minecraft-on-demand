@@ -30,14 +30,25 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   });
 
   if (!res.ok) {
-    let message = `Request failed (${res.status})`;
+    // Always include status code in the thrown error message so callers can pattern-match reliably
+    let errorMessage = "";
     try {
-      const data = await res.json();
-      message = data?.message || message;
+      const errorResponseBody: unknown = await res.json();
+      if (errorResponseBody && typeof errorResponseBody === "object") {
+        const messageField: unknown = (errorResponseBody as { message?: unknown }).message;
+        if (typeof messageField === "string") {
+          errorMessage = messageField;
+        }
+      }
     } catch {
-      // ignore
+      // ignore JSON parse errors; we'll fall back to a generic message
     }
-    throw new Error(message);
+    const formattedErrorMessage = errorMessage
+      ? `${errorMessage} (${res.status})`
+      : `Request failed (${res.status})`;
+    const error = new Error(formattedErrorMessage) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
   }
 
   // Attempt JSON; fall back to text
