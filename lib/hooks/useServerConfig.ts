@@ -37,6 +37,12 @@ export const useMcServerConfiguration = () => {
     queryKey: ["config", userId],
     queryFn: () => fetchServerConfiguration(auth),
     enabled: !!userId,
+    // Cache on first load; do not auto-refetch unless explicitly invalidated (e.g., after Save)
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
     retry: (failureCount, error) => {
       if (error instanceof StatusError && error.status === 404) {
         return false;

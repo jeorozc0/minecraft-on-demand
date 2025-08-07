@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { RawServerResponse } from "./useServerStatus";
+import type { RawServerResponse } from "@/lib/types";
 import { apiFetch, useAuthHeader } from "@/lib/api";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
 

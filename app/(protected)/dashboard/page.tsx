@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,6 @@ const STATUS_META: Record<ServerStatus, { color: string; label: string }> = {
 };
 
 export default function Dashboard() {
-  const router = useRouter();
   const {
     isLoading,
     isStarting,
@@ -29,7 +28,6 @@ export default function Dashboard() {
     config,
     publicIp,
     activeServerId,
-    hasActiveServer,
     hasConfiguration,
     startServer,
     stopServer,
@@ -104,9 +102,9 @@ export default function Dashboard() {
             <span className="text-sm font-medium">Status</span>
             <Badge variant="secondary" className="flex items-center gap-2">
               <span
-                className={`size-2 rounded-full ${STATUS_META[status].color}`}
+                className={`size-2 rounded-full ${STATUS_META[status as ServerStatus].color}`}
               />
-              {STATUS_META[status].label}
+              {STATUS_META[status as ServerStatus].label}
             </Badge>
           </div>
 
@@ -149,12 +147,10 @@ export default function Dashboard() {
                   server.
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => router.push("/config")}
-              >
-                Go to Config
+              <Button size="sm" variant="secondary" asChild>
+                <Link href="/config" prefetch>
+                  Go to Config
+                </Link>
               </Button>
             </div>
           )}

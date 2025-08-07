@@ -4,7 +4,7 @@ import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
 import { useStopServer } from "./useStopServer";
 import { useMcServerConfiguration } from "./useServerConfig";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const useServerManager = () => {
@@ -29,7 +29,8 @@ export const useServerManager = () => {
     useMcServerConfiguration();
 
   // Pass an override status to ensure transient states keep polling
-  const transientOverride: any = (isOptimisticStopping || isStopping) ? "STOPPING" : isStarting ? "PENDING" : undefined;
+  const transientOverride: "STOPPING" | "PENDING" | undefined =
+    (isOptimisticStopping || isStopping) ? "STOPPING" : (isStarting ? "PENDING" : undefined);
   const { data: statusData } = useMcServerStatus(activeServerId, transientOverride);
 
   const status =
