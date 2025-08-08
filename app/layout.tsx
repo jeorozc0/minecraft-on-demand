@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ReactQueryClientProvider } from "@/components/react-query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/providers/SupabasProvider";
 import { createClient } from "@/utils/supabase/server";
 import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "./providers";
+import { ReactScan } from "@/components/react-scan";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,8 +33,9 @@ export default async function RootLayout({
     data: { session },
   } = await supabase.auth.getSession();
   return (
-    <ReactQueryClientProvider>
+    <Providers>
       <html lang="en" suppressHydrationWarning>
+        <ReactScan />
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
@@ -50,6 +52,6 @@ export default async function RootLayout({
           </ThemeProvider>
         </body>
       </html>
-    </ReactQueryClientProvider>
+    </Providers>
   );
 }

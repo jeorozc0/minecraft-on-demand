@@ -3,7 +3,6 @@ import { useStartServer } from "./useServer";
 import { useMcServerStatus } from "./useServerStatus";
 import { useUserServer } from "./useUserServer";
 import { useStopServer } from "./useStopServer";
-import { useMcServerConfiguration } from "./useServerConfig";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -23,10 +22,6 @@ export const useServerManager = () => {
   const [isOptimisticStopping, setIsOptimisticStopping] = useState(false);
 
   const activeServerId = newServerData?.serverId ?? existingServer?.serverId;
-
-  // Fetch the full server configuration.
-  const { data: serverConfig, isLoading: isLoadingConfig } =
-    useMcServerConfiguration();
 
   // Pass an override status to ensure transient states keep polling
   const transientOverride: "STOPPING" | "PENDING" | undefined =
@@ -80,7 +75,7 @@ export const useServerManager = () => {
 
   return {
     // Combine loading states for a simpler UI check.
-    isLoading: isLoadingUserServer || isLoadingConfig,
+    isLoading: isLoadingUserServer,
     isStarting,
     isStopping,
     status,
@@ -89,7 +84,6 @@ export const useServerManager = () => {
     activeServerId,
     hasActiveServer: !!activeServerId && status === "RUNNING",
     // **NEW**: Expose whether a configuration exists.
-    hasConfiguration: !!serverConfig,
     startServer,
     stopServer: ((variables, options) => {
       setIsOptimisticStopping(true);
