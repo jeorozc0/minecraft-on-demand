@@ -17,10 +17,7 @@ const deleteWorldRequest = async (): Promise<void> => {
       errorData.message || `Failed to delete world (${res.status})`;
     throw new Error(errorMessage);
   }
-
-  return;
 };
-
 
 export const useDeleteConfig = () => {
   return useMutation({
