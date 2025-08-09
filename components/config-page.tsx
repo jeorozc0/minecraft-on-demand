@@ -155,9 +155,75 @@ export default function ConfigurationPage() {
 
   if (isLoadingConfig || Object.keys(formState).length === 0) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        <p className="ml-4">Loading configuration...</p>
+      <div className="mx-auto max-w-4xl space-y-6 animate-pulse">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 rounded bg-muted" />
+            <div className="h-4 w-72 rounded bg-muted" />
+          </div>
+          <div className="h-10 w-32 rounded bg-muted" />
+        </div>
+
+        {/* Core Settings skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-32 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-10 w-full rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Game Settings skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-32 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-10 w-full rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* World Settings skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-32 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-10 w-full rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Player & Network Settings skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-48 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-32 rounded bg-muted" />
+                <div className="h-10 w-full rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -212,7 +278,6 @@ export default function ConfigurationPage() {
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <div>
-              <Label>Minecraft Version</Label>
               <VersionSelect
                 value={formState.version ?? ""}
                 onChangeAction={(v) => handleValueChange("version", v)}

@@ -11,11 +11,22 @@ export const ModpackSchema = z.object({
   modpackId: z.string().min(1),
   modpackName: z.string().min(1),
   createdAt: z.number().int().positive(),
-  mods: z.array(ModSchema).min(1),
-  type: z.enum(["FABRIC", "FORGE", "QUILT", "NEOFORGE"]),
+  mods: z.array(ModSchema),
+  type: z.string(),
   updatedAt: z.number().int().positive(),
-  userId: z.string().uuid(),
   version: z.string().min(1),
 });
 
+export const ModpackSchemaGet = z.object({
+  modpackId: z.string().min(1),
+  modpackName: z.string().min(1),
+  createdAt: z.number().int().positive(),
+  mods: z.number(),
+  type: z.string(),
+  updatedAt: z.number().int().positive(),
+  version: z.string().min(1),
+});
+
+
 export type Modpack = z.infer<typeof ModpackSchema>;
+

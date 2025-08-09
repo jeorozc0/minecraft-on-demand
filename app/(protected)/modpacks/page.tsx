@@ -1,5 +1,5 @@
 import ModpacksPage from '@/components/modpacks-page';
-import fetchUserModpacks from '@/lib/api/modpacks';
+import { fetchUserModpacks } from '@/lib/api/modpacks';
 import {
   dehydrate,
   HydrationBoundary,

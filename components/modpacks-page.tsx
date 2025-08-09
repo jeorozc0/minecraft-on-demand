@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, PackageOpen, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import fetchUserModpacks from "@/lib/api/modpacks";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,68 +34,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePutUserPack } from "@/lib/hooks/usePutUserModpack";
+import { fetchUserModpacks } from "@/lib/api/modpacks";
 
-type ModLoader = "Fabric" | "Forge" | "NeoForge" | "Quilt" | "Vanilla";
-type Modpack = {
-  id: string;
-  name: string;
-  version: string;
-  loader: ModLoader;
-  modsCount: number;
-  updatedAt: string;
-};
+type ModLoader = string;
 
 const VERSION_OPTIONS = ["1.21.1", "1.21.0", "1.20.6", "1.20.1"];
 const LOADER_OPTIONS: ModLoader[] = [
-  "Fabric",
-  "Forge",
-  "NeoForge",
-  "Quilt",
-  "Vanilla",
-];
-
-const INITIAL_DATA: Modpack[] = [
-  {
-    id: "vanilla-plus",
-    name: "Vanilla Plus",
-    version: "1.21.1",
-    loader: "Vanilla",
-    modsCount: 14,
-    updatedAt: "2025-07-28T14:00:00.000Z",
-  },
-  {
-    id: "skyfactory-ultra",
-    name: "SkyFactory Ultra",
-    version: "1.20.6",
-    loader: "Forge",
-    modsCount: 86,
-    updatedAt: "2025-07-15T10:00:00.000Z",
-  },
-  {
-    id: "fabric-fastpack",
-    name: "Fabric Fastpack",
-    version: "1.21.0",
-    loader: "Fabric",
-    modsCount: 22,
-    updatedAt: "2025-06-30T18:00:00.000Z",
-  },
+  "FABRIC",
+  "FORGE",
+  "NEOFORGE",
+  "QUILT",
+  "VANILLA",
 ];
 
 export default function ModpacksPage() {
   const router = useRouter();
-  const [modpacks, setModpacks] = useState<Modpack[]>(INITIAL_DATA);
+  const putUserPack = usePutUserPack();
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [version, setVersion] = useState<string>(VERSION_OPTIONS[0]);
   const [loader, setLoader] = useState<ModLoader>(LOADER_OPTIONS[0]);
 
-  const { data: fetchedModpacks } = useQuery({
+  const { data: modpacks = [], isLoading } = useQuery({
     queryKey: ["modpacks"],
     queryFn: fetchUserModpacks,
   });
-
-  console.log("Fetched modpacks from API:", fetchedModpacks);
 
   const dateFmt = useMemo(
     () =>
@@ -124,16 +87,13 @@ export default function ModpacksPage() {
     if (!trimmed) return;
 
     const id = slugify(trimmed) || `modpack-${Date.now()}`;
-    const newPack: Modpack = {
-      id,
-      name: trimmed,
-      version,
-      loader,
-      modsCount: 0,
-      updatedAt: new Date().toISOString(),
-    };
 
-    setModpacks((prev) => [newPack, ...prev]);
+    putUserPack.mutate({
+      modpackName: trimmed,
+      version,
+      type: loader,
+    });
+
     setOpen(false);
     resetModal();
     router.push(`/modpacks/${id}`);
@@ -204,7 +164,7 @@ export default function ModpacksPage() {
                   <Label>Mod loader</Label>
                   <Select
                     value={loader}
-                    onValueChange={(v) => setLoader(v as ModLoader)}
+                    onValueChange={(v) => setLoader(v)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select loader" />
@@ -236,34 +196,85 @@ export default function ModpacksPage() {
         </AlertDialog>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {modpacks.map((pack) => (
-          <Link key={pack.id} href={`/modpacks/${pack.id}`} className="group">
-            <Card className="h-full transition-shadow hover:shadow-md">
+      {/* ✅ Show loading or empty state */}
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card
+              key={i}
+              className="h-full transition-shadow hover:shadow-md animate-pulse"
+            >
               <CardHeader className="flex items-start justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <PackageOpen className="size-5 text-muted-foreground" />
-                  {pack.name}
-                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 rounded bg-muted" />
+                  <div className="h-5 w-32 rounded bg-muted" />
+                </div>
                 <div className="flex gap-2">
-                  <Badge variant="secondary">{pack.version}</Badge>
-                  <Badge>{pack.loader}</Badge>
+                  <div className="h-5 w-12 rounded bg-muted" />
+                  <div className="h-5 w-14 rounded bg-muted" />
                 </div>
               </CardHeader>
 
-              <CardContent className="text-sm text-muted-foreground">
-                {pack.modsCount} mods • Updated{" "}
-                {dateFmt.format(new Date(pack.updatedAt))}
+              <CardContent>
+                <div className="h-4 w-3/4 rounded bg-muted" />
               </CardContent>
 
               <CardFooter className="justify-between">
-                <span className="text-sm">Open</span>
-                <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                <div className="h-4 w-10 rounded bg-muted" />
+                <div className="h-4 w-4 rounded bg-muted" />
               </CardFooter>
             </Card>
-          </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : modpacks.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed rounded-lg bg-muted/30">
+          <PackageOpen className="w-12 h-12 text-muted-foreground mb-4" />
+          <h2 className="text-lg font-semibold">No modpacks found</h2>
+          <p className="text-sm text-muted-foreground max-w-sm mt-1">
+            You haven’t created any modpacks yet. Get started by creating your first one.
+          </p>
+          <Button
+            className="mt-6"
+            onClick={() => setOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Modpack
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {modpacks.map((pack) => (
+            <Link
+              key={pack.modpackId}
+              href={`/modpacks/${pack.modpackId}`}
+              className="group"
+            >
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardHeader className="flex items-start justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <PackageOpen className="size-5 text-muted-foreground" />
+                    {pack.modpackName}
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">{pack.version}</Badge>
+                    <Badge>{pack.type}</Badge>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="text-sm text-muted-foreground">
+                  {pack.mods} mods • Updated{" "}
+                  {dateFmt.format(new Date(pack.updatedAt))}
+                </CardContent>
+
+                <CardFooter className="justify-between">
+                  <span className="text-sm">Open</span>
+                  <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </CardFooter>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
