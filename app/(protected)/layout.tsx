@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppHeader from "@/components/app-header";
+import { Toaster } from "sonner";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <AppHeader />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <Toaster richColors />
       </SidebarInset>
     </SidebarProvider>
   );

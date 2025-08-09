@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ChevronRight, PackageOpen, Search, Trash2 } from "lucide-react";
+import { ChevronRight, ExternalLink, PackageOpen, Search, Trash2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,8 @@ import {
 import { Modpack as ApiModpack } from "@/lib/zod/modpacks";
 import { fetchUserModpackById } from "@/lib/api/modpacks";
 import { useSearchMods } from "@/lib/hooks/useSearchMods";
+import Link from "next/link";
+import { usePutUserModpack } from "@/lib/hooks/usePutUserModpack";
 
 export default function ModpackDetailPage({ modpackId }: { modpackId: string }) {
   const { data: apiModpack, isLoading } = useQuery({
@@ -37,6 +39,7 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
   const searchModsMutation = useSearchMods();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { mutate: updateModpack, isPending } = usePutUserModpack();
 
   useEffect(() => {
     if (apiModpack) {
@@ -165,6 +168,13 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant="secondary">{pack.version}</Badge>
           <Badge>{pack.type}</Badge>
+          <Button
+            size="sm"
+            onClick={() => pack && updateModpack(pack)}
+            disabled={!pack || isPending}
+          >
+            {isPending ? "Saving..." : "Save"}
+          </Button>
         </div>
       </div>
 
@@ -249,7 +259,7 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[40%]">Name</TableHead>
-                    <TableHead>Version</TableHead>
+                    <TableHead>URL</TableHead>
                     <TableHead>Loader</TableHead>
                     <TableHead>Added</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -260,7 +270,13 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
                     <TableRow key={m.projectId}>
                       <TableCell className="font-medium">{m.title}</TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{m.slug}</Badge>
+                        <Link
+                          href={`https://modrinth.com/mod/${m.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="inline-block w-4 h-4 ml-1" />
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <Badge>{pack.type}</Badge>

@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
     const result = await client.searchProjects({
       query,
-      facets, // ✅ now a string
+      facets,
     });
 
     const simplified = result.hits.map((hit) => ({

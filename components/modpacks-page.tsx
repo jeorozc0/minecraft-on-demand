@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ChevronRight, PackageOpen, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,12 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { usePutUserPack } from "@/lib/hooks/usePutUserModpack";
 import { fetchUserModpacks } from "@/lib/api/modpacks";
+import { usePostUserModpack } from "@/lib/hooks/usePostUserModpack";
+import { VersionSelect } from "./ui/minecraft-version-select";
 
 type ModLoader = string;
 
-const VERSION_OPTIONS = ["1.21.1", "1.21.0", "1.20.6", "1.20.1"];
 const LOADER_OPTIONS: ModLoader[] = [
   "FABRIC",
   "FORGE",
@@ -50,11 +50,11 @@ const LOADER_OPTIONS: ModLoader[] = [
 
 export default function ModpacksPage() {
   const router = useRouter();
-  const putUserPack = usePutUserPack();
+  const putUserPack = usePostUserModpack();
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [version, setVersion] = useState<string>(VERSION_OPTIONS[0]);
+  const [version, setVersion] = useState<string>("");
   const [loader, setLoader] = useState<ModLoader>(LOADER_OPTIONS[0]);
 
   const { data: modpacks = [], isLoading } = useQuery({
@@ -72,13 +72,9 @@ export default function ModpacksPage() {
     []
   );
 
-  function slugify(s: string) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  }
-
   function resetModal() {
     setName("");
-    setVersion(VERSION_OPTIONS[0]);
+    setVersion("");
     setLoader(LOADER_OPTIONS[0]);
   }
 
@@ -86,17 +82,20 @@ export default function ModpacksPage() {
     const trimmed = name.trim();
     if (!trimmed) return;
 
-    const id = slugify(trimmed) || `modpack-${Date.now()}`;
-
-    putUserPack.mutate({
-      modpackName: trimmed,
-      version,
-      type: loader,
-    });
-
-    setOpen(false);
-    resetModal();
-    router.push(`/modpacks/${id}`);
+    putUserPack.mutate(
+      {
+        modpackName: trimmed,
+        version,
+        type: loader,
+      },
+      {
+        onSuccess: (created) => {
+          setOpen(false);
+          resetModal();
+          router.push(`/modpacks/${created.modpackId}`);
+        },
+      }
+    );
   }
 
   return (
@@ -145,19 +144,7 @@ export default function ModpacksPage() {
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label>Version</Label>
-                  <Select value={version} onValueChange={setVersion}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {VERSION_OPTIONS.map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <VersionSelect value={version} onChangeAction={setVersion} />
                 </div>
 
                 <div className="grid gap-2">
@@ -187,9 +174,9 @@ export default function ModpacksPage() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleCreate}
-                disabled={!name.trim()}
+                disabled={!name.trim() || putUserPack.isPending}
               >
-                Create
+                {putUserPack.isPending ? "Creating..." : "Create"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

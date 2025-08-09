@@ -35,6 +35,7 @@ import { useQuery } from "@tanstack/react-query";
 import fetchServerConfiguration from "@/lib/api/server-config";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { StatusError } from "@/lib/types/error";
+import { fetchUserModpacks } from "@/lib/api/modpacks";
 
 type ServerConfiguration = z.infer<typeof ServerConfigurationSchema>;
 
@@ -71,7 +72,7 @@ export default function ConfigurationPage() {
   const { session } = useSupabaseSession();
   const userId = session?.user.id;
   const key = ["config", userId ?? "anon"] as const;
-
+  const [selectedModpackId, setSelectedModpackId] = useState("");
   const { data: initialConfig, isLoading: isLoadingConfig, isError } = useQuery({
     queryKey: key as unknown as string[],
     queryFn: fetchServerConfiguration,
@@ -85,6 +86,11 @@ export default function ConfigurationPage() {
       if (error instanceof StatusError && error.status === 404) return false;
       return failureCount < 3;
     },
+  });
+
+  const { data: modpacks = [] } = useQuery({
+    queryKey: ["modpacks"],
+    queryFn: fetchUserModpacks,
   });
 
   const { mutate: updateConfig, isPending: isSaving } = useUpdateConfiguration();
@@ -153,6 +159,12 @@ export default function ConfigurationPage() {
     }
   };
 
+  const filteredModpacks = modpacks.filter(
+    (m) =>
+      m.version === formState.version &&
+      m.type?.toUpperCase() === formState.type?.toUpperCase()
+  );
+
   if (isLoadingConfig || Object.keys(formState).length === 0) {
     return (
       <div className="mx-auto max-w-4xl space-y-6 animate-pulse">
@@ -170,8 +182,8 @@ export default function ConfigurationPage() {
           <CardHeader>
             <div className="h-5 w-32 rounded bg-muted" />
           </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            {[...Array(2)].map((_, i) => (
+          <CardContent className="grid gap-6 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="space-y-2">
                 <div className="h-4 w-24 rounded bg-muted" />
                 <div className="h-10 w-full rounded bg-muted" />
@@ -276,7 +288,7 @@ export default function ConfigurationPage() {
           <CardHeader>
             <CardTitle>Core Settings</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
+          <CardContent className="grid gap-6 md:grid-cols-3">
             <div>
               <VersionSelect
                 value={formState.version ?? ""}
@@ -289,8 +301,28 @@ export default function ConfigurationPage() {
               onValueChange={(v) => handleValueChange("type", v)}
               options={serverTypeOptions}
             />
-          </CardContent>
-        </Card>
+            <ConfigSelect
+              label="Modpack"
+              value={selectedModpackId}
+              onValueChange={(value) => {
+                setSelectedModpackId(value);
+              }}
+              options={
+                filteredModpacks.length > 0
+                  ? filteredModpacks.map((m) => ({
+                    label: m.modpackName,
+                    value: m.modpackId,
+                  }))
+                  : [
+                    {
+                      label: "No compatible modpack found",
+                      value: "__no_modpack__",
+                      disabled: true,
+                    },
+                  ]
+              }
+            />
+          </CardContent>        </Card>
 
         <Card>
           <CardHeader>
@@ -493,6 +525,7 @@ function ConfigInput(
 type SelectOption = {
   label: string;
   value: string;
+  disabled?: boolean;
 };
 
 function ConfigSelect({
@@ -500,22 +533,32 @@ function ConfigSelect({
   value,
   onValueChange,
   options,
+  disabled,
 }: {
   label: string;
   value?: string;
   onValueChange: (value: string) => void;
   options: SelectOption[];
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Select value={value} onValueChange={onValueChange}>
+      <Select
+        value={value}
+        onValueChange={onValueChange}
+        disabled={disabled}
+      >
         <SelectTrigger>
           <SelectValue placeholder={`Select ${label}`} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              disabled={option.disabled}
+            >
               {option.label}
             </SelectItem>
           ))}
