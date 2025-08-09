@@ -1,44 +1,38 @@
-// pages/api/modrinth-search.ts
-import type { NextApiRequest, NextApiResponse } from "next";
+import { ModrinthV2Client } from "@xmcl/modrinth";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query, version, categories } = req.query;
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const query = searchParams.get("query");
+  const version = searchParams.get("version");
+  const categories = searchParams.get("categories");
 
   if (!query || !version || !categories) {
-    return res.status(400).json({ error: "Missing required parameters" });
+    return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400 });
   }
 
-  const facets = JSON.stringify([
-    (categories as string).split(",").map((c) => `categories:${c.toLowerCase()}`),
-    [`versions:${version}`],
-    ["project_type:mod"],
-  ]);
-
-  const url = new URL("https://api.modrinth.com/v2/search");
-  url.searchParams.set("query", query as string);
-  url.searchParams.set("facets", facets);
-
   try {
-    const response = await fetch(url.toString(), {
-      headers: {
-        "User-Agent": "YourAppName/1.0 (contact@example.com)",
-      },
+    const client = new ModrinthV2Client();
+
+    const facets = JSON.stringify([
+      categories.split(",").map((c) => `categories:${c.toLowerCase()}`),
+      [`versions:${version}`],
+      ["project_type:mod"],
+    ]);
+
+    const result = await client.searchProjects({
+      query,
+      facets, // ✅ now a string
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: await response.text() });
-    }
-
-    const data = await response.json();
-
-    const results = (data.hits || []).map((hit: any) => ({
+    const simplified = result.hits.map((hit) => ({
       title: hit.title,
       project_id: hit.project_id,
       slug: hit.slug,
     }));
 
-    res.status(200).json(results);
+    return new Response(JSON.stringify(simplified), { status: 200 });
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch from Modrinth" });
+    console.error("Modrinth search error:", error);
+    return new Response(JSON.stringify({ error: "Failed to fetch from Modrinth" }), { status: 500 });
   }
 }

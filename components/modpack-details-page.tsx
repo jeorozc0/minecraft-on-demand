@@ -33,10 +33,10 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
     queryFn: () => fetchUserModpackById(modpackId),
   });
 
-  const searchModsMutation = useSearchMods();
-
   const [pack, setPack] = useState<ApiModpack | null>(null);
+  const searchModsMutation = useSearchMods();
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
   useEffect(() => {
     if (apiModpack) {
@@ -55,18 +55,24 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
   );
 
   useEffect(() => {
-    if (!query.trim() || !pack?.version || !pack?.type) return;
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [query]);
 
-    const timeout = setTimeout(() => {
+  const version = pack?.version;
+  const type = pack?.type;
+
+  useEffect(() => {
+    if (debouncedQuery && version && type) {
       searchModsMutation.mutate({
-        query: query.trim(),
-        version: pack.version,
-        categories: [pack.type],
+        query: debouncedQuery,
+        version,
+        categories: [type],
       });
-    }, 5000);
-
-    return () => clearTimeout(timeout);
-  }, [query, pack?.version, pack?.type, searchModsMutation]);
+    }
+  }, [debouncedQuery, version, type]);
 
   function handleAdd(modLite: { project_id: string; title: string; slug: string }) {
     if (!pack) return;

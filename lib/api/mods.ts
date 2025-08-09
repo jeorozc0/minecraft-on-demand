@@ -20,10 +20,8 @@ export async function searchMods({
   });
 
   const res = await fetch(`/api/modrinth-search?${params.toString()}`);
-
   if (!res.ok) {
     throw new Error(`Failed to search mods: ${res.status} ${res.statusText}`);
   }
-
   return res.json();
 }
