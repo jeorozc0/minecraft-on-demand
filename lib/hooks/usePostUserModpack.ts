@@ -1,24 +1,20 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modpack } from "@/lib/zod/modpacks"; // type from your schema
 import { toast } from "sonner";
 import { postUserModpack } from "../api/modpacks";
+import { CreatePackInput } from "@/lib/types/modpacks";
 
-export type CreatePackInput = {
-  modpackName: string;
-  version: string;
-  type: string
-};
+// CreatePackInput moved to shared types to avoid circular imports
 
 export function usePostUserModpack() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (input: CreatePackInput) => {
-      const payload: Partial<Modpack> = {
+      const payload: CreatePackInput = {
         modpackName: input.modpackName,
-        type: input.type.toUpperCase() as Modpack["type"],
+        type: input.type.toUpperCase(),
         version: input.version,
       };
 
@@ -26,7 +22,7 @@ export function usePostUserModpack() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["modpacks"] });
-      toast.success("Modpack correctly created.")
+      toast.success("Modpack correctly created.");
     },
   });
 }

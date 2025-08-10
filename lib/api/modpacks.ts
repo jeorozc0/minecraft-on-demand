@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getAccessToken } from "@/lib/utils";
 import { apiFetch } from "./wrapper";
 import { ModpackListResponseSchema, ModpackSchema } from "../zod/modpacks";
-import { CreatePackInput } from "../hooks/usePostUserModpack";
+import { CreatePackInput } from "@/lib/types/modpacks";
 
 type Modpack = z.infer<typeof ModpackSchema>;
 
