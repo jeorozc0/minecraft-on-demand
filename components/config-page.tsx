@@ -323,6 +323,12 @@ export default function ConfigurationPage() {
               onValueChange={(v) => handleValueChange("type", v)}
               options={serverTypeOptions}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Modpack</CardTitle></CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
             <ConfigSelect
               label="Modpack"
               value={selectedModpackId}
@@ -360,7 +366,13 @@ export default function ConfigurationPage() {
                   ]
               }
             />
-          </CardContent>        </Card>
+
+            <ConfigSwitch
+              label="Download Dependencies"
+              onCheckedChange={() => console.log("checked")}
+            />
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
@@ -514,7 +526,38 @@ export default function ConfigurationPage() {
             />
           </CardContent>
         </Card>
-      </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Extra Server Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <ConfigInput
+              label="MOTD"
+              onChange={(e) => {
+                console.log("MOTD changed to:", e.target.value);
+              }}
+            />
+            <ConfigInput
+              label="OPS"
+              onChange={(e) => {
+                console.log("OPS changed to:", e.target.value);
+              }}
+            />
+            <ConfigSwitch
+              label="Use Aikar Flags"
+              onCheckedChange={(v) => {
+                console.log("Use Aikar Flags changed to:", v);
+              }}
+            />
+            <ConfigSwitch
+              label="Use Meowice Flags"
+              onCheckedChange={(v) => {
+                console.log("Use Meowice Flags changed to:", v);
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div >
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
