@@ -21,12 +21,19 @@ export const ModpackSchemaGet = z.object({
   modpackId: z.string().min(1),
   modpackName: z.string().min(1),
   createdAt: z.number().int().positive(),
-  mods: z.number(),
+  mods: z.array(ModSchema),
   type: z.string(),
   updatedAt: z.number().int().positive(),
+  userId: z.string(),
   version: z.string().min(1),
+});
+
+export const ModpackListResponseSchema = z.object({
+  items: z.array(ModpackSchemaGet),
+  lastEvaluatedKey: z.string().optional(),
 });
 
 
 export type Modpack = z.infer<typeof ModpackSchema>;
+export type ModpackList = z.infer<typeof ModpackListResponseSchema>;
 

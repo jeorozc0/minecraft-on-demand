@@ -36,10 +36,10 @@ import fetchServerConfiguration from "@/lib/api/server-config";
 import { useSupabaseSession } from "@/providers/SupabasProvider";
 import { StatusError } from "@/lib/types/error";
 import { fetchUserModpacks } from "@/lib/api/modpacks";
+import { ModpackList } from "@/lib/zod/modpacks";
 
 type ServerConfiguration = z.infer<typeof ServerConfigurationSchema>;
 
-// Mapped options for user-friendly select dropdowns
 const serverTypeOptions = [
   { label: "Vanilla", value: "VANILLA" },
   { label: "Paper", value: "PAPER" },
@@ -81,17 +81,19 @@ export default function ConfigurationPage() {
     gcTime: Infinity,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: true, // allow remount refetch when invalidated
+    refetchOnMount: true,
     retry: (failureCount, error) => {
       if (error instanceof StatusError && error.status === 404) return false;
       return failureCount < 3;
     },
   });
 
-  const { data: modpacks = [] } = useQuery({
+  const { data: modpacks } = useQuery<ModpackList>({
     queryKey: ["modpacks"],
     queryFn: fetchUserModpacks,
   });
+
+  const safeModpacks: ModpackList = modpacks ?? { items: [], lastEvaluatedKey: "" };
 
   const { mutate: updateConfig, isPending: isSaving } = useUpdateConfiguration();
   const { mutate: deletConfig, isPending: isDeleting } = useDeleteConfig();
@@ -130,7 +132,6 @@ export default function ConfigurationPage() {
   const proceedWithSave = () => {
     const validation = ServerConfigurationSchema.safeParse(formState);
     if (validation.success) {
-      // DELETE world data first, then run the optimistic update mutation
       deletConfig(undefined, {
         onSuccess: () => {
           updateConfig(validation.data);
@@ -159,7 +160,7 @@ export default function ConfigurationPage() {
     }
   };
 
-  const filteredModpacks = modpacks.filter(
+  const filteredModpacks = safeModpacks.items.filter(
     (m) =>
       m.version === formState.version &&
       m.type?.toUpperCase() === formState.type?.toUpperCase()

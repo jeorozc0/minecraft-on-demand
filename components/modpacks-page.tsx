@@ -37,6 +37,7 @@ import {
 import { fetchUserModpacks } from "@/lib/api/modpacks";
 import { usePostUserModpack } from "@/lib/hooks/usePostUserModpack";
 import { VersionSelect } from "./ui/minecraft-version-select";
+import { ModpackList } from "@/lib/zod/modpacks";
 
 type ModLoader = string;
 
@@ -57,10 +58,12 @@ export default function ModpacksPage() {
   const [version, setVersion] = useState<string>("");
   const [loader, setLoader] = useState<ModLoader>(LOADER_OPTIONS[0]);
 
-  const { data: modpacks = [], isLoading } = useQuery({
+  const { data: modpacks, isLoading } = useQuery<ModpackList>({
     queryKey: ["modpacks"],
     queryFn: fetchUserModpacks,
   });
+
+  const safeModpacks: ModpackList = modpacks ?? { items: [], lastEvaluatedKey: "" };
 
   const dateFmt = useMemo(
     () =>
@@ -213,7 +216,7 @@ export default function ModpacksPage() {
             </Card>
           ))}
         </div>
-      ) : modpacks.length === 0 ? (
+      ) : safeModpacks.items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed rounded-lg bg-muted/30">
           <PackageOpen className="w-12 h-12 text-muted-foreground mb-4" />
           <h2 className="text-lg font-semibold">No modpacks found</h2>
@@ -230,7 +233,7 @@ export default function ModpacksPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {modpacks.map((pack) => (
+          {safeModpacks.items.map((pack) => (
             <Link
               key={pack.modpackId}
               href={`/modpacks/${pack.modpackId}`}
@@ -249,7 +252,7 @@ export default function ModpacksPage() {
                 </CardHeader>
 
                 <CardContent className="text-sm text-muted-foreground">
-                  {pack.mods} mods • Updated{" "}
+                  {pack.mods.length} mods • Updated{" "}
                   {dateFmt.format(new Date(pack.updatedAt))}
                 </CardContent>
 

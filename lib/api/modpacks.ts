@@ -1,16 +1,11 @@
 import { z } from "zod";
 import { getAccessToken } from "@/lib/utils";
 import { apiFetch } from "./wrapper";
-import { ModpackSchema, ModpackSchemaGet } from "../zod/modpacks";
+import { ModpackListResponseSchema, ModpackSchema } from "../zod/modpacks";
 import { CreatePackInput } from "../hooks/usePostUserModpack";
 
 type Modpack = z.infer<typeof ModpackSchema>;
-type Modpacks = z.infer<typeof ModpackSchemaGet>;
 
-
-const ModpackListSchema = z.object({
-  items: z.array(ModpackSchemaGet),
-});
 
 
 export const CreatedModpackResponseSchema = z.object({
@@ -25,15 +20,17 @@ export type CreatedModpackResponse = z.infer<
 /**
  * Fetches all modpacks for the authenticated user.
  */
-export async function fetchUserModpacks(): Promise<Modpacks[]> {
+type ModpackList = z.infer<typeof ModpackListResponseSchema>;
+
+export async function fetchUserModpacks(): Promise<ModpackList> {
   const token = await getAccessToken();
   const data = await apiFetch<unknown>(`/modpacks`, {
     cache: "no-store",
     authSession: token ? { token } : null,
   });
   try {
-    const parsed = ModpackListSchema.parse(data);
-    return parsed.items;
+    const parsed = ModpackListResponseSchema.parse(data);
+    return parsed;
   } catch (err) {
     console.error("Failed to parse modpack data:", err, "Raw data:", data);
     throw err;
