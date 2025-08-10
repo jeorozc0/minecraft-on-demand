@@ -44,6 +44,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.83.0(react@19.1.0)
+      '@xmcl/modrinth':
+        specifier: ^2.5.0
+        version: 2.5.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1379,6 +1382,10 @@ packages:
     resolution: {integrity: sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==}
     cpu: [x64]
     os: [win32]
+
+  '@xmcl/modrinth@2.5.0':
+    resolution: {integrity: sha512-OpPpBemZ/yYvphgLVXGV+jESR9n8OceEsMaMvxuFZrIpi9LdYTa2oyVlnZHD7Dte+S+ttD8Y2AUncSJUNFRgNg==}
+    engines: {node: '>=16.4'}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -3035,6 +3042,10 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
+  undici@7.2.3:
+    resolution: {integrity: sha512-2oSLHaDalSt2/O/wHA9M+/ZPAOcU2yrSP/cdBYJ+YxZskiPYDSqHbysLSlD7gq3JMqOoJI5O31RVU3BxX/MnAA==}
+    engines: {node: '>=20.18.1'}
+
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
@@ -4343,6 +4354,10 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
+
+  '@xmcl/modrinth@2.5.0':
+    dependencies:
+      undici: 7.2.3
 
   accepts@2.0.0:
     dependencies:
@@ -6283,6 +6298,8 @@ snapshots:
       which-boxed-primitive: 1.1.1
 
   undici-types@6.21.0: {}
+
+  undici@7.2.3: {}
 
   unpipe@1.0.0: {}
 

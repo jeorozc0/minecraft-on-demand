@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Settings } from "lucide-react";
+import { Boxes, Home, Settings } from "lucide-react";
 
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const items = [
     href: "/config",
     icon: Settings,
   },
+  { title: "Modpacks", href: "/modpacks", icon: Boxes },
 ];
 
 export function AppSidebar() {

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/providers/SupabasProvider";
 import { createClient } from "@/utils/supabase/server";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -47,7 +46,6 @@ export default async function RootLayout({
           >
             <SupabaseProvider initialSession={session}>
               {children}
-              <Toaster richColors />
             </SupabaseProvider>
           </ThemeProvider>
         </body>

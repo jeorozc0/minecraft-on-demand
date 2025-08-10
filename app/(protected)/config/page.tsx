@@ -1,4 +1,5 @@
 import ConfigurationPage from '@/components/config-page'
+import { fetchUserModpacks } from '@/lib/api/modpacks';
 import fetchServerConfiguration from '@/lib/api/server-config'
 import { createClient } from '@/utils/supabase/server';
 import {
@@ -16,6 +17,11 @@ export default async function ConfigPage() {
   await qc.prefetchQuery({
     queryKey: ["config", userId ?? "anon"],
     queryFn: fetchServerConfiguration,
+  });
+
+  await qc.prefetchQuery({
+    queryKey: ["modpacks"],
+    queryFn: fetchUserModpacks,
   });
 
   return (

@@ -98,9 +98,46 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        <p className="ml-4">Checking for your server...</p>
+      <div className="mx-auto w-full max-w-4xl space-y-6 animate-pulse">
+        {/* Header skeleton */}
+        <div className="w-full text-center space-y-2">
+          <div className="h-8 w-64 mx-auto rounded bg-muted" />
+          <div className="h-4 w-80 mx-auto rounded bg-muted" />
+        </div>
+
+        {/* Control Panel skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-32 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="flex flex-col items-start gap-4">
+            {/* Status row */}
+            <div className="flex w-full items-center justify-between">
+              <div className="h-4 w-16 rounded bg-muted" />
+              <div className="h-5 w-24 rounded bg-muted" />
+            </div>
+            {/* Action button */}
+            <div className="h-10 w-32 rounded bg-muted" />
+          </CardContent>
+        </Card>
+
+        {/* Server Information skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="h-5 w-40 rounded bg-muted" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[...Array(2)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-4"
+              >
+                <div className="h-4 w-24 rounded bg-muted" />
+                <div className="h-4 w-40 rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
