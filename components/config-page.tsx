@@ -5,7 +5,7 @@ import { z } from "zod";
 import { AlertTriangle, Loader2, Save } from "lucide-react";
 import { ServerConfigurationSchema } from "@/lib/types/config";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -234,7 +234,10 @@ export default function ConfigurationPage() {
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Server Configuration</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Server Configuration</h1>
+            <p className="text-sm text-muted-foreground">Choose your server basics, then tune gameplay, world, and performance.</p>
+          </div>
           <Button onClick={handleSave} disabled={isProcessing}>
             {isProcessing ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Save className="mr-2 size-4" />}
             Save Changes
@@ -253,7 +256,10 @@ export default function ConfigurationPage() {
 
         {/* Core Settings */}
         <Card>
-          <CardHeader><CardTitle>Core Settings</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Basics</CardTitle>
+            <CardDescription>Set the Minecraft version and server software. Changing either later may delete your current world.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <VersionSelect value={formState.version ?? ""} onChangeAction={(v) => handleValueChange("version", v)} />
             <MemoConfigSelect label="Server Type" value={formState.type} onValueChange={(v) => handleValueChange("type", v as ServerConfiguration["type"])} options={serverTypeOptions} />
@@ -262,10 +268,13 @@ export default function ConfigurationPage() {
 
         {/* Modpack */}
         <Card>
-          <CardHeader><CardTitle>Modpack</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Modpack</CardTitle>
+            <CardDescription>Select a saved modpack that matches the chosen version and type. We’ll auto-fill projects from your modpack.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <MemoConfigSelect
-              label="Select Modpack"
+              label="Modpack"
               value={selectedModpackId}
               onValueChange={(value) => {
                 setSelectedModpackId(value);
@@ -285,48 +294,58 @@ export default function ConfigurationPage() {
               }
             />
             <MemoConfigSelect
-              label="Download Dependencies"
+              label="Mod Dependencies"
               value={formState.modrinth_download_dependencies}
               onValueChange={(v) => handleValueChange("modrinth_download_dependencies", v as ServerConfiguration["modrinth_download_dependencies"])}
               options={[
                 { label: "Required", value: "required" },
                 { label: "None", value: "none" },
               ]}
+              description="Automatically include required dependencies for selected mods."
             />
           </CardContent>
         </Card>
 
         {/* Game Settings */}
         <Card>
-          <CardHeader><CardTitle>Game Settings</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Gameplay Settings</CardTitle>
+            <CardDescription>Tune how the game plays.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <MemoConfigSelect label="Gamemode" value={formState.mode} onValueChange={(v) => handleValueChange("mode", v as ServerConfiguration["mode"])} options={gamemodeOptions} />
             <MemoConfigSelect label="Difficulty" value={formState.difficulty} onValueChange={(v) => handleValueChange("difficulty", v as ServerConfiguration["difficulty"])} options={difficultyOptions} />
-            <MemoConfigSwitch label="Hardcore" checked={formState.hardcore === "true"} onCheckedChange={(v) => handleValueChange("hardcore", v ? "true" : "false")} />
+            <MemoConfigSwitch label="Hardcore Mode" checked={formState.hardcore === "true"} onCheckedChange={(v) => handleValueChange("hardcore", v ? "true" : "false")} />
             <MemoConfigSwitch label="Allow Flight" checked={formState.allow_flight === "TRUE"} onCheckedChange={(v) => handleValueChange("allow_flight", v ? "TRUE" : "FALSE")} />
           </CardContent>
         </Card>
 
         {/* World Settings */}
         <Card>
-          <CardHeader><CardTitle>World Settings</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>World Settings</CardTitle>
+            <CardDescription>Control world generation and dimensions.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <MemoConfigInput label="Seed" value={formState.seed ?? ""} onChange={(e) => handleValueChange("seed", e.target.value)} />
-            <MemoConfigSelect label="Level Type" value={formState.level_type} onValueChange={(v) => handleValueChange("level_type", v as ServerConfiguration["level_type"])} options={levelTypeOptions} />
+            <MemoConfigInput label="World Seed" value={formState.seed ?? ""} onChange={(e) => handleValueChange("seed", e.target.value)} placeholder="Leave blank for random" description="Enter a specific seed or leave empty for a random world." />
+            <MemoConfigSelect label="World Type" value={formState.level_type} onValueChange={(v) => handleValueChange("level_type", v as ServerConfiguration["level_type"])} options={levelTypeOptions} />
             <MemoConfigSwitch label="Generate Structures" checked={formState.generate_structures === "true"} onCheckedChange={(v) => handleValueChange("generate_structures", v ? "true" : "false")} />
             <MemoConfigSwitch label="Allow Nether" checked={formState.allow_nether === "true"} onCheckedChange={(v) => handleValueChange("allow_nether", v ? "true" : "false")} />
           </CardContent>
         </Card>
 
-        {/* Player & Network Settings */}
+        {/* Players & Performance */}
         <Card>
-          <CardHeader><CardTitle>Player & Network Settings</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Players & Performance</CardTitle>
+            <CardDescription>Control player limits and performance-related options.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <MemoConfigInput label="Max Players" type="number" value={formState.max_players ?? "0"} onChange={(e) => handleValueChange("max_players", e.target.value)} />
-            <MemoConfigInput label="View Distance" type="number" value={formState.view_distance ?? "0"} onChange={(e) => handleValueChange("view_distance", e.target.value)} />
-            <MemoConfigInput label="Simulation Distance" type="number" value={formState.simulation_distance ?? "0"} onChange={(e) => handleValueChange("simulation_distance", e.target.value)} />
-            <MemoConfigInput label="Spawn Protection" type="number" value={formState.spawn_protection ?? "0"} onChange={(e) => handleValueChange("spawn_protection", e.target.value)} />
-            <MemoConfigInput label="Network Compression Threshold" type="number" value={formState.network_compression_threshold ?? "0"} onChange={(e) => handleValueChange("network_compression_threshold", e.target.value)} />
+            <MemoConfigInput label="Max Players" type="number" value={formState.max_players ?? "0"} onChange={(e) => handleValueChange("max_players", e.target.value)} description="Maximum simultaneous players allowed." />
+            <MemoConfigInput label="View Distance (chunks)" type="number" value={formState.view_distance ?? "0"} onChange={(e) => handleValueChange("view_distance", e.target.value)} description="Higher values increase render distance but reduce performance." />
+            <MemoConfigInput label="Simulation Distance (chunks)" type="number" value={formState.simulation_distance ?? "0"} onChange={(e) => handleValueChange("simulation_distance", e.target.value)} />
+            <MemoConfigInput label="Spawn Protection (blocks)" type="number" value={formState.spawn_protection ?? "0"} onChange={(e) => handleValueChange("spawn_protection", e.target.value)} />
+            <MemoConfigInput label="Compression Threshold (bytes)" type="number" value={formState.network_compression_threshold ?? "0"} onChange={(e) => handleValueChange("network_compression_threshold", e.target.value)} />
             <MemoConfigSwitch label="Online Mode" checked={formState.online_mode === "true"} onCheckedChange={(v) => handleValueChange("online_mode", v ? "true" : "false")} />
             <MemoConfigSwitch label="Spawn Animals" checked={formState.spawn_animals === "true"} onCheckedChange={(v) => handleValueChange("spawn_animals", v ? "true" : "false")} />
             <MemoConfigSwitch label="Spawn Monsters" checked={formState.spawn_monsters === "true"} onCheckedChange={(v) => handleValueChange("spawn_monsters", v ? "true" : "false")} />
@@ -335,14 +354,17 @@ export default function ConfigurationPage() {
           </CardContent>
         </Card>
 
-        {/* Extra Server Settings */}
+        {/* Advanced & Metadata */}
         <Card>
-          <CardHeader><CardTitle>Extra Server Settings</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Advanced & Metadata</CardTitle>
+            <CardDescription>Optional server presentation and JVM tuning flags.</CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <MemoConfigInput label="MOTD" value={formState.motd ?? ""} onChange={(e) => handleValueChange("motd", e.target.value)} />
-            <MemoConfigInput label="OPS" value={formState.ops ?? ""} onChange={(e) => handleValueChange("ops", e.target.value)} />
-            <MemoConfigSwitch label="Use Aikar Flags" checked={formState.use_aikar_flags === "true"} onCheckedChange={(v) => handleValueChange("use_aikar_flags", v ? "true" : "false")} />
-            <MemoConfigSwitch label="Use Meowice Flags" checked={formState.use_meowice_flags === "true"} onCheckedChange={(v) => handleValueChange("use_meowice_flags", v ? "true" : "false")} />
+            <MemoConfigInput label="Server MOTD" value={formState.motd ?? ""} onChange={(e) => handleValueChange("motd", e.target.value)} placeholder="A Minecraft server. Powered by AWS" description="Shown in the multiplayer server list." />
+            <MemoConfigInput label="Server Operators" value={formState.ops ?? ""} onChange={(e) => handleValueChange("ops", e.target.value)} placeholder="comma,separated,usernames" description="Comma-separated Minecraft usernames with operator permissions." />
+            <MemoConfigSwitch label="Enable Aikar JVM Flags" checked={formState.use_aikar_flags === "true"} onCheckedChange={(v) => handleValueChange("use_aikar_flags", v ? "true" : "false")} />
+            <MemoConfigSwitch label="Enable Meowice JVM Flags" checked={formState.use_meowice_flags === "true"} onCheckedChange={(v) => handleValueChange("use_meowice_flags", v ? "true" : "false")} />
           </CardContent>
         </Card>
       </div>
@@ -370,13 +392,16 @@ export default function ConfigurationPage() {
 
 /* ------------------ Memoized Components ------------------ */
 const MemoConfigInput = React.memo(function ConfigInput(
-  props: React.ComponentProps<typeof Input> & { label: string }
+  props: React.ComponentProps<typeof Input> & { label: string; description?: string }
 ) {
-  const { label, ...rest } = props;
+  const { label, description, ...rest } = props;
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       <Input {...rest} />
+      {description ? (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 });
@@ -389,12 +414,14 @@ const MemoConfigSelect = React.memo(function ConfigSelect({
   onValueChange,
   options,
   disabled,
+  description,
 }: {
   label: string;
   value?: string;
   onValueChange: (value: string) => void;
   options: SelectOption[];
   disabled?: boolean;
+  description?: string;
 }) {
   return (
     <div className="space-y-2">
@@ -411,6 +438,9 @@ const MemoConfigSelect = React.memo(function ConfigSelect({
           ))}
         </SelectContent>
       </Select>
+      {description ? (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 });
@@ -419,15 +449,26 @@ const MemoConfigSwitch = React.memo(function ConfigSwitch({
   label,
   checked,
   onCheckedChange,
+  disabled,
+  description,
+  className,
 }: {
   label: string;
   checked?: boolean;
   onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  description?: string;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border p-3">
-      <Label>{label}</Label>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    <div className={`space-y-1 rounded-lg border p-3 ${className ?? "self-end"}`}>
+      <div className="flex items-center justify-between">
+        <Label>{label}</Label>
+        <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+      </div>
+      {description ? (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      ) : null}
     </div>
   );
 });

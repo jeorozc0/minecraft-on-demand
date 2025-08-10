@@ -23,7 +23,7 @@ const items = [
     icon: Home,
   },
   {
-    title: "Config",
+    title: "Configuration",
     href: "/config",
     icon: Settings,
   },
