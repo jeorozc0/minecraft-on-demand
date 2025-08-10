@@ -104,13 +104,22 @@ export default function ConfigurationPage() {
 
   useEffect(() => {
     if (!isLoadingConfig) {
-      setFormState(
-        initialConfig ??
-        ({
-          version: "1.21",
-          type: "PAPER",
-        } as Partial<ServerConfiguration>)
-      );
+      const defaults: Partial<ServerConfiguration> = {
+        version: "1.21",
+        type: "PAPER",
+        modrinth_download_dependencies: "required",
+        motd: "A Minecraft server. Powered by §6AWS§r",
+        ops: "",
+        use_aikar_flags: "false",
+        use_meowice_flags: "false",
+      };
+      const config = initialConfig ?? defaults;
+      setFormState(config);
+
+      // Preselect modpack if modpackId exists
+      if (config.modpackId) {
+        setSelectedModpackId(config.modpackId);
+      }
     }
   }, [initialConfig, isLoadingConfig]);
 
@@ -367,9 +376,14 @@ export default function ConfigurationPage() {
               }
             />
 
-            <ConfigSwitch
+            <ConfigSelect
               label="Download Dependencies"
-              onCheckedChange={() => console.log("checked")}
+              value={formState.modrinth_download_dependencies}
+              onValueChange={(v) => handleValueChange("modrinth_download_dependencies", v)}
+              options={[
+                { label: "Required", value: "required" },
+                { label: "None", value: "none" },
+              ]}
             />
           </CardContent>
         </Card>
@@ -527,34 +541,12 @@ export default function ConfigurationPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Extra Server Settings</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Extra Server Settings</CardTitle></CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
-            <ConfigInput
-              label="MOTD"
-              onChange={(e) => {
-                console.log("MOTD changed to:", e.target.value);
-              }}
-            />
-            <ConfigInput
-              label="OPS"
-              onChange={(e) => {
-                console.log("OPS changed to:", e.target.value);
-              }}
-            />
-            <ConfigSwitch
-              label="Use Aikar Flags"
-              onCheckedChange={(v) => {
-                console.log("Use Aikar Flags changed to:", v);
-              }}
-            />
-            <ConfigSwitch
-              label="Use Meowice Flags"
-              onCheckedChange={(v) => {
-                console.log("Use Meowice Flags changed to:", v);
-              }}
-            />
+            <ConfigInput label="MOTD" value={formState.motd ?? ""} onChange={(e) => handleValueChange("motd", e.target.value)} />
+            <ConfigInput label="OPS" value={formState.ops ?? ""} onChange={(e) => handleValueChange("ops", e.target.value)} />
+            <ConfigSwitch label="Use Aikar Flags" checked={formState.use_aikar_flags === "true"} onCheckedChange={(v) => handleValueChange("use_aikar_flags", v ? "true" : "false")} />
+            <ConfigSwitch label="Use Meowice Flags" checked={formState.use_meowice_flags === "true"} onCheckedChange={(v) => handleValueChange("use_meowice_flags", v ? "true" : "false")} />
           </CardContent>
         </Card>
       </div >

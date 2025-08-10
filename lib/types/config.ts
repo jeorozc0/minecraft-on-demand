@@ -30,5 +30,11 @@ export const ServerConfigurationSchema = z
     sync_chunk_writes: z.enum(["true", "false"]).default("true"),
     spawn_npcs: z.enum(["true", "false"]).default("true"),
     modrinth_projects: z.string().default(""),
+    modrinth_download_dependencies: z.enum(["required", "none"]).default("required"),
+    modpackId: z.string().default(""),
+    motd: z.string().default("A Minecraft server. Powered by §6AWS§r"),
+    ops: z.string().default(""),
+    use_meowice_flags: z.enum(["true", "false"]).default("false"),
+    use_aikar_flags: z.enum(["true", "false"]).default("false"),
   })
   .strict();
