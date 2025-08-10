@@ -87,7 +87,6 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
     };
     setPack({
       ...pack,
-      updatedAt: Date.now(),
       mods: [newMod, ...pack.mods],
     });
     setQuery("");
@@ -97,7 +96,6 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
     if (!pack) return;
     setPack({
       ...pack,
-      updatedAt: Date.now(),
       mods: pack.mods.filter((m) => m.projectId !== modId),
     });
   }
@@ -162,7 +160,7 @@ export default function ModpackDetailPage({ modpackId }: { modpackId: string }) 
         <div className="min-w-0">
           <h1 className="text-3xl font-bold break-words">{pack.modpackName}</h1>
           <p className="mt-1 text-muted-foreground">
-            Manage mods for this modpack. Updated {dateFmt.format(new Date(pack.updatedAt))}
+            Manage mods for this modpack.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

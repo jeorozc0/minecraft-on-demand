@@ -129,8 +129,28 @@ export default function ConfigurationPage() {
     setFormState((prev) => ({ ...prev, [key]: value }));
   };
 
+  const buildFinalConfig = (): ServerConfiguration => {
+    const finalConfig = { ...formState } as ServerConfiguration;
+
+    // If a modpack is selected, recalc modrinth_projects
+    if (selectedModpackId) {
+      const selectedPack = safeModpacks.items.find(
+        (m) => m.modpackId === selectedModpackId
+      );
+      if (selectedPack) {
+        finalConfig.modrinth_projects = selectedPack.mods
+          .map((mod) => mod.slug)
+          .filter(Boolean)
+          .join(",");
+      }
+    }
+
+    return finalConfig;
+  };
+
   const proceedWithSave = () => {
-    const validation = ServerConfigurationSchema.safeParse(formState);
+    const finalConfig = buildFinalConfig();
+    const validation = ServerConfigurationSchema.safeParse(finalConfig);
     if (validation.success) {
       deletConfig(undefined, {
         onSuccess: () => {
@@ -144,6 +164,7 @@ export default function ConfigurationPage() {
       console.error("Validation Errors:", validation.error.format());
     }
   };
+
 
   const handleSave = () => {
     if (isDestructiveChange) {
@@ -307,6 +328,22 @@ export default function ConfigurationPage() {
               value={selectedModpackId}
               onValueChange={(value) => {
                 setSelectedModpackId(value);
+
+                const selectedPack = safeModpacks.items.find(
+                  (m) => m.modpackId === value
+                );
+
+                if (selectedPack) {
+                  const slugs = selectedPack.mods
+                    .map((mod) => mod.slug)
+                    .filter(Boolean)
+                    .join(",");
+
+                  setFormState((prev) => ({
+                    ...prev,
+                    modrinth_projects: slugs,
+                  }));
+                }
               }}
               options={
                 filteredModpacks.length > 0

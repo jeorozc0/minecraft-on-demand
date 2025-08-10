@@ -29,5 +29,6 @@ export const ServerConfigurationSchema = z
     max_players: z.string().default("20"),
     sync_chunk_writes: z.enum(["true", "false"]).default("true"),
     spawn_npcs: z.enum(["true", "false"]).default("true"),
+    modrinth_projects: z.string().default(""),
   })
   .strict();

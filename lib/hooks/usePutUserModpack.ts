@@ -10,11 +10,11 @@ export function usePutUserModpack() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (modpack: Modpack) => putUserModpack(modpack),
+    mutationFn: (payload: Modpack) => putUserModpack(payload),
     onSuccess: async (res) => {
-      // Refetch the full modpack so cache is correct
-      const full = await fetchUserModpackById(res.modpackId);
-      queryClient.setQueryData(["modpack", res.modpackId], full);
+      const modpackIdFromLocation = res.location.split("/modpacks/")[1];
+      const full = await fetchUserModpackById(modpackIdFromLocation);
+      queryClient.setQueryData(["modpack", modpackIdFromLocation], full);
       queryClient.invalidateQueries({ queryKey: ["modpacks"] });
 
       toast.success(`"${full.modpackName}" saved successfully.`);

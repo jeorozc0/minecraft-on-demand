@@ -7,7 +7,6 @@ import { CreatePackInput } from "../hooks/usePostUserModpack";
 type Modpack = z.infer<typeof ModpackSchema>;
 
 
-
 export const CreatedModpackResponseSchema = z.object({
   modpackId: z.string(),
   createdAt: z.number(),
@@ -86,19 +85,19 @@ export async function postUserModpack(
  * Sends a PUT request to /modpacks with the modpack data.
  */
 const PutResponseSchema = z.object({
-  modpackId: z.string(),
-  createdAt: z.number(),
+  updatedAt: z.number(),
   location: z.string(),
 });
 
-export async function putUserModpack(modpack: Modpack) {
+export async function putUserModpack(payload: Modpack) {
   const token = await getAccessToken();
 
-  const data = await apiFetch<unknown>(`/modpacks/`, {
+  const { modpackId, ...bodyWithoutId } = payload;
+  const data = await apiFetch<unknown>(`/modpacks/${modpackId}`, {
     method: "PUT",
     cache: "no-store",
     authSession: token ? { token } : null,
-    body: JSON.stringify(modpack),
+    body: JSON.stringify(bodyWithoutId),
     headers: {
       "Content-Type": "application/json",
     },

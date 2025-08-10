@@ -8,12 +8,10 @@ export const ModSchema = z.object({
 });
 
 export const ModpackSchema = z.object({
-  modpackId: z.string().min(1),
+  modpackId: z.string(),
   modpackName: z.string().min(1),
-  createdAt: z.number().int().positive(),
   mods: z.array(ModSchema),
   type: z.string(),
-  updatedAt: z.number().int().positive(),
   version: z.string().min(1),
 });
 
